@@ -27,9 +27,9 @@ S5. Assumption (not requested verbatim): CC BY-NC-ND 4.0 on the source page forb
 ## Tasks
 
 - [x] T1 Detector, pref and options UI. Specs: S1, S2, S4, S5. Route: inline. Commit `d8af7ff`.
-- [ ] T2 Editor menu state and SONG memory field. Specs: S1, S2. Route: inline.
-- [ ] T3 Documentation and README link. Specs: S1-S3, S5. Route: inline.
-- [ ] T4 Verification and Windows handoff. Specs: S3. Route: inline.
+- [x] T2 Editor menu state and SONG memory field. Specs: S1, S2. Route: inline. Commit `d037c6d`.
+- [x] T3 Documentation and README link. Specs: S1-S3, S5. Route: inline. Commit `d037c6d`.
+- [x] T4 Verification and Windows handoff. Specs: S3. Route: inline. Local checks observed in L9; Windows runtime checks remain with the friend.
 
 ## Log
 
@@ -51,3 +51,7 @@ L6. Route declaration: task is tracked (multi-file behavior, external runtime no
 L7. T1 verification: the detector test was written first and failed to compile with `Type not found : ModchartEditorDetector` (RED), then passed 8/8 probes after the detector was added (GREEN). The first work-unit commit included an executable `tests/run-modchart-detector.sh`; RDD assess classified it `high` (`executable_mode`, `process_boundary`, `shell_source`, `review_due: true`). The wrapper was removed and the commit amended; the test remains in `tests/ModchartEditorDetectorTest.hx` with its inline scratch-directory commands. Reassessment over `ca9754c..HEAD` returned `risk: medium`, `review_due: false`, `review_due_reason: under_budget`, so no native review cycle was started. Final C1 commit: `d8af7ff`; untracked files were declared with `--untracked-scope=exclude` and the canonical inventory hash.
 
 L8. T2/T3 implementation evidence: `ModChartEditorState.hx` no longer contains any `ModChartEditor.exe`, `Sys.command` or hard-coded `/home/dante/...` path; it scans recognized scripts through `Mods.directoriesWithFile(Paths.getSharedPath(), 'scripts/')` and reports OFF / NOT FOUND / FOUND. `Song.hx` gained an optional `modchartEditorMemory:Dynamic` field for the script's scratch state. `docs/MODCHART_EDITOR.md` follows the lead-with-answer guide shape and includes the exact Windows probe handoff. README gained one link in the Editors section. `lime build linux -debug` linked successfully after these edits; final explicit exit-code check is part of T4.
+
+L9. T4 verification, all observed locally: detector test 8/8 PASS in an isolated scratch copy (`ModchartEditorDetectorTest.hx` at line 15); structural checks confirmed no EXE launcher or hard-coded developer path in the editor state, the new options entry and pref exist, and the handoff section exists; `lime build linux -debug` exited 0 with `BUILD_LINUX_OK`. The second work-unit commit is `d037c6d`. RDD assess over `ca9754c..d037c6d` with the canonical untracked inventory declared returned `risk: medium`, `review_due: false`, `review_due_reason: under_budget`; no native review cycle. Windows build/runtime probes are explicitly delegated to the friend in `docs/MODCHART_EDITOR.md` and remain pending.
+
+L10. Outcome per spec: S1 met (EXE stub replaced), S2 met (opt-in, source-scoped, script not bundled), S3 deferred to the Windows owner with a written checklist, S4/S5 met (engine evidence and license constraint recorded). No push, PR or merge was requested.
