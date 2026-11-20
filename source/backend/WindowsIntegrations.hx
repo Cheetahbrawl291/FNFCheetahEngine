@@ -218,8 +218,17 @@ class WindowsIntegrations
 			log('Screen Capture needs a path inside the game folder');
 			return;
 		}
+		// Only track screenshots this session creates. If the target already
+		// held a user file, never mark it for deletion on exit.
+		final full:String = absoluteChartPath(path);
+		final existed:Bool = FileSystem.exists(full);
 		WindowsAPI.screenCapture(path);
-		if (!screenshotPaths.contains(path))
+		if (!existed && !FileSystem.exists(full))
+		{
+			log('Screen Capture wrote no file at $path');
+			return;
+		}
+		if (!existed && !screenshotPaths.contains(path))
 			screenshotPaths.push(path);
 	}
 

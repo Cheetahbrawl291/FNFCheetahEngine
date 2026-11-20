@@ -188,7 +188,8 @@ class Main extends Sprite
 		backend.WindowsIntegrations.init();
 		// Lime dispatches this when the OS closes the window. Cleanup is
 		// synchronous, so the desktop is back to normal before the process ends.
-		Application.current.onExit.add(function() {
+		// Lime's onExit event passes the exit code (Event<Int->Void>).
+		Application.current.onExit.add(function(_:Int) {
 			backend.WindowsIntegrations.restoreAll();
 		});
 		#end

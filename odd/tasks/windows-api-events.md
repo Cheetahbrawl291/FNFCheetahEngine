@@ -30,7 +30,7 @@ S5. Assumption (not requested verbatim): non-Windows targets must keep their cur
 - [x] T2 Chart events, gating and active-state tracking. Spec: S1, S2. Commit `509091d`.
 - [x] T3 Exit restore hook and crash path. Spec: S3. Commit `509091d`.
 - [x] T4 README documentation. Spec: S1-S3. In the working tree, left uncommitted: the README already carried the user's own rewrite and the `CheetahEngineLogo.png` path fix, so only the new "Windows API song events" section was appended, without sweeping the user's parallel doc edits into a feature commit.
-- [ ] T5 Local compile/static checks + Windows test handoff. Spec: S4. Local checks done (see L8); Windows build/runtime probes remain with the user's friend.
+- [x] T5 Local compile/static checks + Windows test handoff. Spec: S4. Local checks done (see L8, L11); handoff at `docs/WINDOWS_API_TESTING.md` (see L11). Windows build/runtime probes remain with the user's friend.
 
 ## Log
 
@@ -52,4 +52,10 @@ L7. Route declaration: small-by-resume test fails (multi-file feature, Windows t
 
 L8. Local evidence (observed): `lime build linux -debug` exit 0 twice, no errors/warnings, binary produced. Windows helper typechecked against the REAL installed lib with `-D windows -cpp ... --no-output` and minimal flixel/ClientPrefs/Application stubs: exit 0. Both stub and real-lib typechecks passed. A naive `lime build windows -debug` on Linux fails earlier in `linc_luajit` (`cpp.RawPointer` not available on neko) — pre-existing environment limitation, not this diff. Two real-lib bugs found and fixed during review: SL-Windows-API joins paths as `Path.directory(programPath) + path` (needs a leading slash), and `prepareGDIEffect` silently ignores unknown names, so the helper now verifies registration before tracking/starting the thread.
 
-L9. Two work-unit commits on `feature/windows-song-events`: `a9412e3` (dependency/prefs/menu), `509091d` (events/helper/exit). README and `docs/img` changes left uncommitted because they are the user's parallel work.
+L9. Two work-unit commits on `feature/windows-song-events`: `a9412e3` (dependency/prefs/menu), `509091d` (events/helper/exit). README and `docs/img` changes were later committed in `07a6f0e` when the user explicitly asked to commit everything.
+
+L10. User instruction, verbatim: "compitea todo". Authorized committing the parallel README/image work and the `odd/` task docs; committed in `07a6f0e`.
+
+L11. Independent verifier verdict (session `ses_e0953f11dffeVYpwwlzIUZZnXD`): S1/S2/S5 met; S3 BLOCKER, S4 unmet. Blocker reproduced against real Lime: `Application.onExit` is `Event<Int->Void>` and a 0-arg listener fails to compile on Windows. Correction batch applied: (1) `Main.hx` callback now `function(_:Int)`; (2) added `docs/WINDOWS_API_TESTING.md` with the 12 event labels, the 5 pref names and a 9-step Windows probe checklist (S4); (3) screenshot tracking now registers a path only if the file did not exist before the event, so opt-in cleanup never deletes a pre-existing user file. Recheck (limited to the blocker's direct regressions): typecheck against real Lime with the patched callback exit 0, helper typecheck vs real lib exit 0, `lime build linux -debug` exit 0. Verdicts S1/S2/S5 rest on the verifier's 16 PASS probe run and are unchanged by these edits.
+
+L12. T5 status: local checks and handoff artifact complete; Windows build/runtime remains unverified locally by design (S4), owned by the user's friend per `docs/WINDOWS_API_TESTING.md`.
