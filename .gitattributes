@@ -4,3 +4,8 @@
 # The bundled editor is third-party, CC BY-NC-ND 4.0. Keep its exact bytes,
 # including CRLF line endings, so the repository never holds a modified copy.
 assets/shared/scripts/ModchartEditor.lua -text
+
+# Baked Erect Mode content is third-party. Keep its exact bytes (incl. CRLF).
+# It lives under assets/base_game/ (songs at top level, rest under shared/).
+assets/base_game/songs/** -text
+assets/base_game/shared/** -text

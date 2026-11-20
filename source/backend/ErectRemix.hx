@@ -55,4 +55,30 @@ class ErectRemix
 	{
 		return diffName == 'Erect' || diffName == 'Nightmare';
 	}
+
+	/**
+	 * Resolve the erect stage for a base stage name, if one exists.
+	 * Erect Mode ships `stages/<stage>Erect.json` + `.lua` beside every base stage
+	 * it overrides, e.g. `stage` -> `stageErect`. Returns null when no erect
+	 * stage exists, so the base stage is kept.
+	 */
+	public static function erectStage(?baseStage:String):String
+	{
+		if(baseStage == null || baseStage.length < 1) return null;
+
+		var candidate:String = baseStage + 'Erect';
+		var path:String = Paths.getSharedPath('stages/$candidate.json');
+		#if MODS_ALLOWED
+		if(sys.FileSystem.exists(path)) return candidate;
+		#else
+		if(openfl.utils.Assets.exists(path)) return candidate;
+		#end
+		return null;
+	}
+
+	/** Characters get a `-dark` variant for the spookyErect stage. */
+	public static inline function isSpookyErect(stage:String):Bool
+	{
+		return stage == 'spookyErect';
+	}
 }

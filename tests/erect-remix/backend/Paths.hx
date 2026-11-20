@@ -13,4 +13,7 @@ class Paths
 
 		return StringTools.trim(hideChars.replace(invalidChars.replace(path, '-'), '')).toLowerCase();
 	}
+
+	inline static public function getSharedPath(file:String = '')
+		return 'assets/shared/$file';
 }

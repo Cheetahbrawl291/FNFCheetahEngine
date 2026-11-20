@@ -456,6 +456,7 @@ class FreeplayState extends MusicBeatState
 				Song.loadFromJson(target.id, target.folder);
 				PlayState.isStoryMode = false;
 				PlayState.storyDifficulty = curDifficulty;
+				applyErectStage();
 
 				trace('CURRENT WEEK: ' + WeekData.getWeekFileName());
 			}
@@ -527,6 +528,34 @@ class FreeplayState extends MusicBeatState
 
 		if(opponentVocals != null) opponentVocals.stop();
 		opponentVocals = FlxDestroyUtil.destroy(opponentVocals);
+	}
+
+	/**
+	 * Apply the erect stage (and spooky dark characters) after a chart is loaded.
+	 * Mirrors Erect Mode's `changeStage.lua`, but works with the content baked
+	 * into assets/, with no dependency on `currentModDirectory`.
+	 */
+	function applyErectStage():Void
+	{
+		var diffName:String = Difficulty.getString(curDifficulty, false);
+		if(!ErectRemix.usesErectAssets(diffName)) return;
+
+		var songId:String = Paths.formatToSongPath(songs[curSelected].songName);
+		if(!erectFolders.exists(songId)) return;
+
+		var baseStage:String = PlayState.SONG.stage;
+		var erect:String = ErectRemix.erectStage(baseStage);
+		if(erect == null) return;
+
+		PlayState.SONG.stage = erect;
+		trace('Erect stage: $baseStage -> $erect');
+
+		if(ErectRemix.isSpookyErect(erect))
+		{
+			if(PlayState.SONG.player1 != null) PlayState.SONG.player1 += '-dark';
+			if(PlayState.SONG.player2 != null) PlayState.SONG.player2 += '-dark';
+			if(PlayState.SONG.gfVersion != null) PlayState.SONG.gfVersion += '-dark';
+		}
 	}
 
 	function currentChart():ChartTarget

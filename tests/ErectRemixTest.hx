@@ -38,5 +38,9 @@ class ErectRemixTest
 		check(ErectRemix.usesErectAssets('Nightmare'), 'nightmare uses remix assets');
 		check(!ErectRemix.usesErectAssets('Normal'), 'normal keeps base assets');
 		check(!ErectRemix.usesErectAssets('Hard'), 'hard keeps base assets');
+
+		check(ErectRemix.isSpookyErect('spookyErect'), 'spooky erect detected');
+		check(!ErectRemix.isSpookyErect('spooky'), 'base spooky not erect');
+		check(!ErectRemix.isSpookyErect('mallErect'), 'other erect stage not spooky');
 	}
 }
