@@ -17,6 +17,7 @@ class OptionsState extends MusicBeatState
 		'Gameplay',
 		'Customization'
 		#if TRANSLATIONS_ALLOWED , 'Language' #end
+		#if windows , 'Windows API' #end
 	];
 	private var grpOptions:FlxTypedGroup<Alphabet>;
 	private static var curSelected:Int = 0;
@@ -41,6 +42,10 @@ class OptionsState extends MusicBeatState
 				openSubState(new options.AccessibilitySubState());
 			case 'File Access':
 				openSubState(new options.FileAccessSubState());
+			#if windows
+			case 'Windows API':
+				openSubState(new options.WindowsApiSubState());
+			#end
 			case 'Gameplay':
 				openSubState(new options.GameplaySettingsSubState());
 			case 'Adjust Delay and Combo':

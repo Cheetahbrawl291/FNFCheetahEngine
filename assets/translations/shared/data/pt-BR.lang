@@ -269,3 +269,5 @@ difficulty_hard: "Difícil"
 
 images/menudifficulties/easy: "images/pt-BR/menudifficulties/easy"
 images/menudifficulties/hard: "images/pt-BR/menudifficulties/hard"
+
+windows_api_menu: "API do Windows"

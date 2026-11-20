@@ -24,6 +24,13 @@ import states.TitleState;
 	public var fileAccessImages:Bool = true;
 	public var fileAccessAudio:Bool = true;
 	public var fileAccessOther:Bool = true;
+
+	// Windows API song events. All OS-level interactions start disabled.
+	public var winApiTaskbar:Bool = false;
+	public var winApiWallpaper:Bool = false;
+	public var winApiScreenshots:Bool = false;
+	public var winApiGdi:Bool = false;
+	public var winApiCleanupScreenshots:Bool = false;
 	public var autoPause:Bool = true;
 	public var antialiasing:Bool = true;
 	public var noteSkin:String = 'Default';

@@ -125,6 +125,8 @@
 	<haxelib name="hxvlc" if="VIDEOS_ALLOWED" version="2.0.1"/>
 	<haxelib name="hxdiscord_rpc" version="1.2.4" if="DISCORD_ALLOWED"/>
 	<haxelib name="flxanimate"/>
+	<!-- Windows-only: song events that drive the OS window/desktop. Install with: haxelib install sl-windows-api -->
+	<haxelib name="sl-windows-api" if="windows"/>
 
 	<!-- Disable Discord IO Thread -->
 	<haxedef name="DISCORD_DISABLE_IO_THREAD" if="hxdiscord_rpc" />
