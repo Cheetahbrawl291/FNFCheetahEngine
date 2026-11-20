@@ -98,7 +98,7 @@
 		     ABotSpeaker.hx degrades gracefully without them (its viz code is #if funkin.vis). -->
 	</section>
 
-	<define name="CHECK_FOR_UPDATES"/>
+	<!-- CHECK_FOR_UPDATES removed: the outdated-version popup is disabled permanently. -->
 
 	<section if="MODS_ALLOWED">
 		<assets path='example_mods' rename='mods' embed='false' type='template' unless="mac"/>
