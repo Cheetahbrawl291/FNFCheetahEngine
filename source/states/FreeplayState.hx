@@ -3,6 +3,7 @@ package states;
 import backend.WeekData;
 import backend.Highscore;
 import backend.Song;
+import backend.ErectRemix;
 import backend.MenuCustomization;
 
 import objects.HealthIcon;
@@ -18,9 +19,17 @@ import openfl.utils.Assets;
 
 import haxe.Json;
 
+typedef ChartTarget =
+{
+	var id:String;
+	var folder:String;
+	var scoreName:String;
+}
+
 class FreeplayState extends MusicBeatState
 {
 	var songs:Array<SongMetadata> = [];
+	var erectFolders:Map<String, String> = new Map<String, String>();
 	var menuLayers:FlxTypedGroup<FlxSprite>;
 	var menuCustom:MenuCustomizationData;
 	var menuCustomCfg:backend.MenuCustomization.MenuConfig;
@@ -84,6 +93,25 @@ class FreeplayState extends MusicBeatState
 			return;
 		}
 
+		erectFolders.clear();
+		for (weekName in WeekData.weeksList)
+		{
+			var remixWeek:WeekData = WeekData.weeksLoaded.get(weekName);
+			if(remixWeek == null || remixWeek.songs == null) continue;
+			for (remixSong in remixWeek.songs)
+			{
+				if(remixSong == null || remixSong.length < 1) continue;
+				var remixName:String = Std.string(remixSong[0]);
+				if(!ErectRemix.isErectName(remixName)) continue;
+				erectFolders.set(
+					Paths.formatToSongPath(ErectRemix.baseName(remixName)),
+					Paths.formatToSongPath(remixName));
+			}
+		}
+
+		if(Lambda.count(erectFolders) > 0)
+			trace('Erect remixes merged into Freeplay: ' + Lambda.count(erectFolders));
+
 		for (i in 0...WeekData.weeksList.length)
 		{
 			if(weekIsLocked(WeekData.weeksList[i])) continue;
@@ -101,6 +129,8 @@ class FreeplayState extends MusicBeatState
 			WeekData.setDirectoryFromWeek(leWeek);
 			for (song in leWeek.songs)
 			{
+				if(ErectRemix.isErectName(Std.string(song[0]))) continue;
+
 				var colors:Array<Int> = song[2];
 				if(colors == null || colors.length < 3)
 				{
@@ -348,8 +378,8 @@ class FreeplayState extends MusicBeatState
 				FlxG.sound.music.volume = 0;
 
 				Mods.currentModDirectory = songs[curSelected].folder;
-				var poop:String = Highscore.formatSong(songs[curSelected].songName.toLowerCase(), curDifficulty);
-				Song.loadFromJson(poop, songs[curSelected].songName.toLowerCase());
+				var target:ChartTarget = currentChart();
+				Song.loadFromJson(target.id, target.folder);
 				if (PlayState.SONG.needsVoices)
 				{
 					vocals = new FlxSound();
@@ -419,11 +449,11 @@ class FreeplayState extends MusicBeatState
 		{
 			persistentUpdate = false;
 			var songLowercase:String = Paths.formatToSongPath(songs[curSelected].songName);
-			var poop:String = Highscore.formatSong(songLowercase, curDifficulty);
+			var target:ChartTarget = currentChart();
 
 			try
 			{
-				Song.loadFromJson(poop, songLowercase);
+				Song.loadFromJson(target.id, target.folder);
 				PlayState.isStoryMode = false;
 				PlayState.storyDifficulty = curDifficulty;
 
@@ -467,7 +497,7 @@ class FreeplayState extends MusicBeatState
 		else if(controls.RESET && !player.playingMusic)
 		{
 			persistentUpdate = false;
-			openSubState(new ResetScoreSubState(songs[curSelected].songName, curDifficulty, songs[curSelected].songCharacter));
+			openSubState(new ResetScoreSubState(currentChart().scoreName, curDifficulty, songs[curSelected].songCharacter));
 			FlxG.sound.play(Paths.sound('scrollMenu'));
 		}
 
@@ -499,6 +529,30 @@ class FreeplayState extends MusicBeatState
 		opponentVocals = FlxDestroyUtil.destroy(opponentVocals);
 	}
 
+	function currentChart():ChartTarget
+	{
+		var songName:String = songs[curSelected].songName;
+		var songId:String = Paths.formatToSongPath(songName);
+		var diffName:String = Difficulty.getString(curDifficulty, false);
+		var erectFolder:String = erectFolders.get(songId);
+
+		if(erectFolder != null && ErectRemix.usesErectAssets(diffName))
+		{
+			trace('Erect chart: $songName / $diffName -> $erectFolder');
+			return {
+				id: ErectRemix.chartId(erectFolder, diffName),
+				folder: erectFolder,
+				scoreName: erectFolder
+			};
+		}
+
+		return {
+			id: Highscore.formatSong(songName, curDifficulty),
+			folder: songId,
+			scoreName: songName
+		};
+	}
+
 	function changeDiff(change:Int = 0)
 	{
 		if (player.playingMusic)
@@ -506,8 +560,9 @@ class FreeplayState extends MusicBeatState
 
 		curDifficulty = FlxMath.wrap(curDifficulty + change, 0, Difficulty.list.length-1);
 		#if !switch
-		intendedScore = Highscore.getScore(songs[curSelected].songName, curDifficulty);
-		intendedRating = Highscore.getRating(songs[curSelected].songName, curDifficulty);
+		var target:ChartTarget = currentChart();
+		intendedScore = Highscore.getScore(target.scoreName, curDifficulty);
+		intendedRating = Highscore.getRating(target.scoreName, curDifficulty);
 		#end
 
 		lastDifficultyName = Difficulty.getString(curDifficulty, false);
@@ -554,7 +609,13 @@ class FreeplayState extends MusicBeatState
 		Mods.currentModDirectory = songs[curSelected].folder;
 		PlayState.storyWeek = songs[curSelected].week;
 		Difficulty.loadFromWeek();
-		
+
+		if(erectFolders.exists(Paths.formatToSongPath(songs[curSelected].songName)))
+		{
+			if(!Difficulty.list.contains('Erect')) Difficulty.list.push('Erect');
+			if(!Difficulty.list.contains('Nightmare')) Difficulty.list.push('Nightmare');
+		}
+
 		var savedDiff:String = songs[curSelected].lastDifficulty;
 		var lastDiff:Int = Difficulty.list.indexOf(lastDifficultyName);
 		if(savedDiff != null && !Difficulty.list.contains(savedDiff) && Difficulty.list.contains(savedDiff))
