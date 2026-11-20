@@ -52,7 +52,7 @@ Downloads are capped at 400 MB because the archive is held in memory. Before the
 - Custom achievements can have their own icon under `images/`, with a live preview in the editor.
 - A new **Unlock Achievement** chart editor event unlocks an achievement by save key when playback reaches it.
 - All other existing editors keep working as before.
-- **Modchart Editor** now points to the external [LUA Modchart Editor](https://gamebanana.com/scripts/12931) by .bakugo / CommanderVideo. The script is not bundled (CC BY-NC-ND 4.0); see [docs/MODCHART_EDITOR.md](docs/MODCHART_EDITOR.md) for installation and the opt-in compatibility switch.
+- **Modchart Editor** is now the bundled [LUA Modchart Editor](https://gamebanana.com/scripts/12931) v1.2.2 by .bakugo / CommanderVideo. Press **5** in a song to open it; exports go to `mods/savedModcharts/`. The script is shipped unmodified under CC BY-NC-ND 4.0; see [docs/MODCHART_EDITOR.md](docs/MODCHART_EDITOR.md) for details.
 
 ### Base game content
 

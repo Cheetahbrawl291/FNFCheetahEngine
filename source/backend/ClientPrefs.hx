@@ -16,10 +16,11 @@ import states.TitleState;
 	public var colorblindMode:String = 'Off';
 	public var reduceMotion:Bool = false;
 	public var textScale:Float = 1;
-	// Opt-in compatibility for the external LUA Modchart Editor script.
-	// Off by default: only a script whose own header identifies it as the editor
-	// receives the Psych version expected by its compatibility branches.
-	public var modchartEditorCompat:Bool = false;
+	// Compatibility for the bundled LUA Modchart Editor script.
+	// On by default so the shipped script works immediately; only a script whose
+	// own header identifies it as the editor receives the Psych version it expects.
+	// Turn this off to restore the engine version for every Lua script.
+	public var modchartEditorCompat:Bool = true;
 
 	// Script file access. Safe Mode restricts writes/deletes to the mods folder and
 	// allows reads from the game folder too. With it off, the per type switches decide.

@@ -1,2 +1,6 @@
 # Auto detect text files and perform LF normalization
 * text=auto
+
+# The bundled editor is third-party, CC BY-NC-ND 4.0. Keep its exact bytes,
+# including CRLF line endings, so the repository never holds a modified copy.
+assets/shared/scripts/ModchartEditor.lua -text

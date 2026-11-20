@@ -1,32 +1,34 @@
-# Use the external LUA Modchart Editor
+# Use the LUA Modchart Editor
 
-The editor menu no longer launches a separate `.exe`. It now guides you through the [LUA Modchart Editor](https://gamebanana.com/scripts/12931) v1.2.2 by .bakugo / CommanderVideo, which runs inside a song. The script is **not included** in this repository: its license is CC BY-NC-ND 4.0, so you download it yourself and the engine never ships a modified copy.
+The editor menu no longer launches a separate `.exe`. The [LUA Modchart Editor](https://gamebanana.com/scripts/12931) v1.2.2 by .bakugo / CommanderVideo is bundled verbatim in `assets/shared/scripts/ModchartEditor.lua` and loads in every song. Press **5** during a song to open it.
+
+> The script is licensed CC BY-NC-ND 4.0. It ships unmodified, with its original header and author links intact. Source and credit: https://gamebanana.com/scripts/12931
 
 ## Quick path
 
-1. Download `LUA Modchart Editor` v1.2.2 from GameBanana and keep the `.lua` file unchanged.
-2. Copy it into `assets/shared/scripts/` or into `mods/<your-mod>/scripts/`.
-3. Open **Options → Modchart Editor → Lua Compatibility** and turn it on.
-4. Enter **Editors → Modchart Editor**. The screen must report `editor script FOUND`.
-5. Start any song and press **5**. The song restarts with the editor active.
-6. While testing a modchart, press **BACKSPACE** to return to the editing UI.
+1. Start any song and press **5**. The song restarts with the editor active.
+2. Build or edit a modchart. Exports go to `mods/savedModcharts/`.
+3. While testing a modchart, press **BACKSPACE** to return to the editing UI.
+4. Press **ESC** in the editor to exit.
+
+The menu entry **Editors → Modchart Editor** shows whether the script was detected and whether compatibility is on.
 
 ## Details
 
 | Topic | Decision |
 |-------|----------|
-| Compatibility switch | Off by default. No script gets a different Lua version until you enable it. |
+| Script location | `assets/shared/scripts/ModchartEditor.lua`, loaded for every song by `PlayState.hx:437-443`. |
+| Compatibility switch | Options → Modchart Editor → Lua Compatibility, **on by default**. Turn it off to restore the engine version for all Lua scripts. |
 | Scope of the switch | Only a `.lua` whose own header contains `LUA Modchart Editor v` and `.bakugo` receives the Psych version string. Every other script keeps the engine version. |
 | Why a version shim | The editor branches on Psych versions (`> 0.6.3`, `> 0.7.1h`, `> 0.7.3`). This engine reports `0.0.1`, which would send the script down its legacy path. The bridge exposes `1.0.4` to that script only. |
 | Existing Lua APIs | `runHaxeCode` and `addHaxeLibrary` already reach Lua through `HScript.implement(this)`; no new execution API was added. Safe Mode is unchanged. |
-| Detection | The editor menu scans `assets/shared/scripts/` and enabled mod script folders for the script header. It never executes a script while scanning. |
-| License | CC BY-NC-ND 4.0. The engine does not redistribute or modify the script; you are responsible for following its license when you download it. |
+| Detection | The editor menu scans script folders for the script header. It never executes a script while scanning. |
+| License | CC BY-NC-ND 4.0. The script is shipped as received, not as a derivative. Attribution and the GameBanana link stay in the file and in this doc. |
 
 ## Checklist
 
-- [ ] The `.lua` file is in a scripts folder and its header is intact.
-- [ ] **Lua Compatibility** is enabled and the editor menu reports `FOUND`.
 - [ ] Pressing **5** in a song opens the editor after a restart.
+- [ ] The editor menu reports `editor script FOUND` and `compatibility ON`.
 - [ ] Exported modcharts appear under `mods/savedModcharts/`.
 - [ ] Turning the switch off restores the normal engine version for all scripts.
 
@@ -35,12 +37,11 @@ The editor menu no longer launches a separate `.exe`. It now guides you through 
 Local verification covers the detector test, static checks and a Linux build only. Windows runtime checks belong to the user's friend:
 
 1. `lime build windows -debug`.
-2. Enable **Options → Modchart Editor → Lua Compatibility**.
-3. Open **Editors → Modchart Editor** and confirm the script is detected.
-4. Start a song, press **5**, confirm the editor UI opens after restart.
-5. Create one strum action, use **Test**, then press **BACKSPACE** to return.
-6. Save a modchart and confirm the generated file in `mods/savedModcharts/`.
-7. Disable the switch, restart the game and confirm the script either reports a version problem or is not loaded; other Lua scripts must still work.
+2. Open **Editors → Modchart Editor** and confirm the script is detected with compatibility on.
+3. Start a song, press **5**, confirm the editor UI opens after restart.
+4. Create one strum action, use **Test**, then press **BACKSPACE** to return.
+5. Save a modchart and confirm the generated file in `mods/savedModcharts/`.
+6. Disable **Lua Compatibility**, restart the game and confirm other Lua scripts still work.
 
 ## Next step
 

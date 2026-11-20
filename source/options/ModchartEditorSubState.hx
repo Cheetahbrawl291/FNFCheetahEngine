@@ -2,11 +2,11 @@
 package options;
 
 /**
- * Settings for the external LUA Modchart Editor script.
+ * Settings for the bundled LUA Modchart Editor script.
  *
- * The script itself is downloaded by the player and is never bundled here.
- * Compatibility is opt-in and only applies when the script's own header is
- * recognized while loading a .lua file.
+ * Compatibility is on by default and only applies when a .lua file's own
+ * header identifies it as the editor. Disable it to restore the engine
+ * version for every Lua script.
  */
 class ModchartEditorSubState extends BaseOptionsMenu
 {
@@ -16,9 +16,9 @@ class ModchartEditorSubState extends BaseOptionsMenu
 		rpcTitle = 'Modchart Editor Settings';
 
 		var option:Option = new Option('Lua Compatibility',
-			'When the external LUA Modchart Editor is detected, expose the\n'
-			+ 'Psych version its compatibility branches expect. Off by default.\n'
-			+ 'Other Lua scripts keep the normal engine version.',
+			'When the LUA Modchart Editor is detected, expose the\n'
+			+ 'Psych version its compatibility branches expect. On by default.\n'
+			+ 'Turn off to restore the engine version for all Lua scripts.',
 			'modchartEditorCompat',
 			BOOL);
 		addOption(option);

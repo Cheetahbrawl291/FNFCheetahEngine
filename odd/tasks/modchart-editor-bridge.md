@@ -8,13 +8,13 @@ Delivery strategy: `ask-on-risk` (local work-unit commits only; no publish).
 
 S1. Replace the current editor. Verbatim from the request:
    > "podrias cambiar el modchart editor actual por este: https://gamebanana.com/scripts/12931"
-   Required: `ModChartEditorState` stops trying to launch an external `.exe` and becomes the entry point for the GameBanana "LUA Modchart Editor" v1.2.2 script. The engine never ships a copy of the script.
+   Required: `ModChartEditorState` stops trying to launch an external `.exe` and becomes the entry point for the GameBanana "LUA Modchart Editor" v1.2.2 script. The original external-only constraint was superseded by L12; the script is now bundled verbatim.
 
-S2. Chosen route. Verbatim from the selected answer:
+S2. Chosen route, superseded by L12. Verbatim from the selected answer:
    > "Bridge, script externo"
    Verbatim from the option description:
    > "Agrego compatibilidad Lua controlada (runHaxeCode, addHaxeLibrary, game, version) y cambio el menú para usar el .lua que tú descargas de GameBanana. No redistribuyo el script ni lo modifico; respeta ND. Toca Safe Mode y necesita prueba en Windows."
-   Required: an opt-in setting, off by default. Only a Lua file whose own source identifies it as the `.bakugo` / CommanderVideo LUA Modchart Editor gets the compatibility version override. The script is downloaded by the user and placed in a scripts folder; no script bytes enter the repository.
+   Required: only a Lua file whose own source identifies it as the `.bakugo` / CommanderVideo LUA Modchart Editor gets the compatibility version override. L12 grants permission to bundle it and asks to "just add it", so the bundled copy is shipped byte-for-byte and the shim is on by default (still user-disableable). Safe Mode and other scripts stay unchanged.
 
 S3. Verification owner. Verbatim from the request:
    > "tranquilo, los test de windows los hace un amigo"
@@ -22,7 +22,7 @@ S3. Verification owner. Verbatim from the request:
 
 S4. Assumption (not requested verbatim): the engine is a Psych fork with `version = '0.0.1'`, while the script branches on Psych versions `> 0.6.3`, `> 0.7.1h`, `> 0.7.2`, `> 0.7.3`. The bridge must expose `'1.0.4'` to that script only. Lua already receives `runHaxeCode`/`addHaxeLibrary` through `HScript.implement(this)` (`FunkinLua.hx:1561`), so no new execution API is needed.
 
-S5. Assumption (not requested verbatim): CC BY-NC-ND 4.0 on the source page forbids redistribution of modified copies. Vendoring the script into the repository is out of scope; the docs link to the GameBanana page.
+S5. License note. The source page states CC BY-NC-ND 4.0. L12 asserts permission to use the editor in the game, so the script is vendored verbatim with its original header and author links intact. The docs keep the attribution and license note; no derivative of the script is created.
 
 ## Tasks
 
@@ -30,6 +30,7 @@ S5. Assumption (not requested verbatim): CC BY-NC-ND 4.0 on the source page forb
 - [x] T2 Editor menu state and SONG memory field. Specs: S1, S2. Route: inline. Commit `d037c6d`.
 - [x] T3 Documentation and README link. Specs: S1-S3, S5. Route: inline. Commit `d037c6d`.
 - [x] T4 Verification and Windows handoff. Specs: S3. Route: inline. Local checks observed in L9; Windows runtime checks remain with the friend.
+- [ ] T5 Bundle the script verbatim and enable the shim by default. Specs: S1, S2, S5. Route: inline. Reopened by L12.
 
 ## Log
 
@@ -57,3 +58,5 @@ L9. T4 verification, all observed locally: detector test 8/8 PASS in an isolated
 L10. Outcome per spec: S1 met (EXE stub replaced), S2 met (opt-in, source-scoped, script not bundled), S3 deferred to the Windows owner with a written checklist, S4/S5 met (engine evidence and license constraint recorded). No push, PR or merge was requested. Evidence commit: `51ae8f5`.
 
 L11. User request, verbatim: "puedes quitar el ejecutable ModChartEditor.exe". Verified a tracked 38 MB binary at `ModChartEditor/ModChartEditor.exe`, the only file in that folder, with no remaining code reference (only historical ODD log prose). Removed with `git rm` in `2638a53`. RDD assess over `ca9754c..2638a53` returned `risk: medium`, `review_due: false`, `review_due_reason: under_budget`; no native review cycle. No rebuild needed: the binary was not part of any build input.
+
+L12. Requirement change, verbatim: "porsierto tengo permiso de usar el modchart editor al juego, solo añadelo". This supersedes the external-only route in S2/S5: the user grants permission to ship the editor with the game and asks to just add it. Affected specs S1, S2, S5 are rewritten above; T5 is opened. The script must be copied byte-for-byte from the earlier API extraction, with its header and author links intact, into `assets/shared/scripts/` so `PlayState.hx:437-443` loads it in every song. The version shim must be active by default or the bundled script sees `0.0.1` and takes the broken legacy path.
