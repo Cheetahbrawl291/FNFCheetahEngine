@@ -18,6 +18,7 @@ class OptionsState extends MusicBeatState
 		'Customization'
 		#if TRANSLATIONS_ALLOWED , 'Language' #end
 		#if windows , 'Windows API' #end
+		#if LUA_ALLOWED , 'Modchart Editor' #end
 	];
 	private var grpOptions:FlxTypedGroup<Alphabet>;
 	private static var curSelected:Int = 0;
@@ -45,6 +46,10 @@ class OptionsState extends MusicBeatState
 			#if windows
 			case 'Windows API':
 				openSubState(new options.WindowsApiSubState());
+			#end
+			#if LUA_ALLOWED
+			case 'Modchart Editor':
+				openSubState(new options.ModchartEditorSubState());
 			#end
 			case 'Gameplay':
 				openSubState(new options.GameplaySettingsSubState());

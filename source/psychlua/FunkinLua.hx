@@ -4,6 +4,7 @@ package psychlua;
 import backend.WeekData;
 import backend.Highscore;
 import backend.Song;
+import backend.ModchartEditorDetector;
 
 import openfl.Lib;
 import openfl.utils.Assets;
@@ -67,6 +68,17 @@ class FunkinLua {
 		//LuaL.dostring(lua, CLENSE);
 
 		this.scriptName = scriptName.trim();
+
+		// Read only the header of a file-backed script. The external Modchart Editor
+		// expects a Psych version string; this engine reports its own version.
+		var scriptIsString:Bool = !FileSystem.exists(this.scriptName);
+		var compatSource:String = null;
+		if(!scriptIsString)
+		{
+			try compatSource = sys.io.File.getContent(this.scriptName) catch(e:Dynamic) compatSource = null;
+		}
+		var compatVersion:String = ModchartEditorDetector.versionOverrideFor(compatSource, ClientPrefs.data.modchartEditorCompat);
+
 		var game:PlayState = PlayState.instance;
 		if(game != null) game.luaArray.push(this);
 
@@ -84,7 +96,9 @@ class FunkinLua {
 		set('Function_Continue', LuaUtils.Function_Continue);
 		set('luaDebugMode', false);
 		set('luaDeprecatedWarnings', true);
-		set('version', MainMenuState.psychEngineVersion.trim());
+		set('version', compatVersion != null ? compatVersion : MainMenuState.psychEngineVersion.trim());
+		if(compatVersion != null)
+			trace('Modchart Editor compatibility: exposing Psych $compatVersion to $scriptName');
 		set('modFolder', this.modFolder);
 
 		// Song/Week shit
@@ -1574,7 +1588,7 @@ class FunkinLua {
 		}
 
 		try{
-			var isString:Bool = !FileSystem.exists(scriptName);
+			var isString:Bool = scriptIsString;
 			var result:Dynamic = null;
 			if(!isString)
 				result = LuaL.dofile(lua, scriptName);
