@@ -24,10 +24,10 @@ S5. License constraint carried over: the script stays verbatim and CC BY-NC-ND 4
 
 ## Tasks
 
-- [x] T1 Song picker UI in `ModChartEditorState`. Specs: S1, S5. Route: inline.
-- [x] T2 Launch the chosen song with the editor active. Specs: S2, S3. Route: inline.
-- [x] T3 Documentation update. Specs: S1-S4. Route: inline.
-- [x] T4 Verification and Windows handoff (local proof observed; Windows probes delegated). Specs: S4. Route: inline.
+- [x] T1 Song picker UI in `ModChartEditorState`. Specs: S1, S5. Route: inline. Commit: `47e7c75`.
+- [x] T2 Launch the chosen song with the editor active. Specs: S2, S3. Route: inline. Commit: `47e7c75`.
+- [x] T3 Documentation update. Specs: S1-S4. Route: inline. Commit: `47e7c75`.
+- [x] T4 Verification and Windows handoff (local proof observed; Windows probes delegated). Specs: S4. Route: inline. Commit: `47e7c75`.
 
 ## Log
 
@@ -44,4 +44,6 @@ L5. Implementation: `ModChartEditorState` replaced its instruction-only screen w
 
 L6. Verification, all observed locally: `lime build linux -debug` exited 0 (`BUILD_LINUX_OK`); detector regression 8/8 PASS with exit 0 in an isolated scratch copy (`tests/ModchartEditorDetectorTest.hx`); structural checks found no EXE/dev-path/stale instruction references and confirmed every required marker (`reloadWeekFiles`, `modchartEditorMemory`, `active: true`, `loadFromJson`, `loadAndSwitchState`, controls); bundled script SHA256 still `0a4035d2ee605556a409c3cc0994349006af717f5238020a95bff0a9cebe0d98`, byte-identical to the user-supplied source. Script flow re-read: `active=true` skips the tooltip branch at `ModchartEditor.lua:708-741`; the `active=false` at `:783` is never read again for UI gating (only refs: 708, 734, 736, 783). Test-first exception: no runnable deterministic test exists for FlxState UI/startup flow and the change does not touch the detector, so RED→GREEN is not applicable here; the detector suite was run as regression, not as new coverage.
 
-L7. Scope boundary: `README.md`, `docs/img/`, and `.atl/` contain pre-existing unrelated worktree changes and were left untouched. Windows build/runtime probes stay delegated to the user's friend per S4; the handoff checklist in `docs/MODCHART_EDITOR.md` was updated with the song-picker steps. Work-unit commit: pending.
+L7. Scope boundary: `README.md`, `docs/img/`, and `.atl/` contain pre-existing unrelated worktree changes and were left untouched. Windows build/runtime probes stay delegated to the user's friend per S4; the handoff checklist in `docs/MODCHART_EDITOR.md` was updated with the song-picker steps.
+
+L8. Delivery: single work-unit commit `47e7c75` (`feat(modchart): pick song before opening Lua editor`), 3 files, 205 insertions / 31 deletions, no publish. RDD assess `--base-ref 0f2fcdf --committed-only --untracked-scope exclude --expected-untracked-inventory sha256:41e17cbe...`: `risk: medium`, `risk code: executable_change`, `review_due: false`, `review_due_reason: under_budget`. No native review cycle started. Feature complete locally; only the friend's Windows probes remain.
