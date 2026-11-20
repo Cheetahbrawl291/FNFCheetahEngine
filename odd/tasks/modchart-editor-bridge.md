@@ -30,7 +30,7 @@ S5. License note. The source page states CC BY-NC-ND 4.0. L12 asserts permission
 - [x] T2 Editor menu state and SONG memory field. Specs: S1, S2. Route: inline. Commit `d037c6d`.
 - [x] T3 Documentation and README link. Specs: S1-S3, S5. Route: inline. Commit `d037c6d`.
 - [x] T4 Verification and Windows handoff. Specs: S3. Route: inline. Local checks observed in L9; Windows runtime checks remain with the friend.
-- [ ] T5 Bundle the script verbatim and enable the shim by default. Specs: S1, S2, S5. Route: inline. Reopened by L12.
+- [x] T5 Bundle the script verbatim and enable the shim by default. Specs: S1, S2, S5. Route: inline. Reopened by L12. Commit `7566036`.
 
 ## Log
 
@@ -60,3 +60,9 @@ L10. Outcome per spec: S1 met (EXE stub replaced), S2 met (opt-in, source-scoped
 L11. User request, verbatim: "puedes quitar el ejecutable ModChartEditor.exe". Verified a tracked 38 MB binary at `ModChartEditor/ModChartEditor.exe`, the only file in that folder, with no remaining code reference (only historical ODD log prose). Removed with `git rm` in `2638a53`. RDD assess over `ca9754c..2638a53` returned `risk: medium`, `review_due: false`, `review_due_reason: under_budget`; no native review cycle. No rebuild needed: the binary was not part of any build input.
 
 L12. Requirement change, verbatim: "porsierto tengo permiso de usar el modchart editor al juego, solo añadelo". This supersedes the external-only route in S2/S5: the user grants permission to ship the editor with the game and asks to just add it. Affected specs S1, S2, S5 are rewritten above; T5 is opened. The script must be copied byte-for-byte from the earlier API extraction, with its header and author links intact, into `assets/shared/scripts/` so `PlayState.hx:437-443` loads it in every song. The version shim must be active by default or the bundled script sees `0.0.1` and takes the broken legacy path.
+
+L13. T5 implementation and verification, all observed: copied the 118 KB script to `assets/shared/scripts/ModchartEditor.lua`; the user later supplied `/home/dante/Descargas/LUA Modchart Editor.text` and it is byte-identical (SHA256 `0a4035d2ee605556a409c3cc0994349006af717f5238020a95bff0a9cebe0d98`), confirming the API extraction was correct. The `.text` extension is only a download artifact; the engine loads `.lua`. `modchartEditorCompat` now defaults to `true`, the option text and both docs describe the bundled script, and the editor state reports FOUND with the install path. Detector test 8/8 PASS; structural checks PASS; `lime build linux -debug` exited 0; the exported copy has the exact SHA256 above. Script was not modified.
+
+L14. Git normalization gotcha, non-obvious: the first bundle commit normalized the script's CRLF to LF because `.gitattributes` has `* text=auto`, producing blob `b034f569...` instead of the source hash. Added `assets/shared/scripts/ModchartEditor.lua -text` to `.gitattributes`, recopied the original bytes and amended the commit; the committed blob now matches SHA256 `0a4035d2...` exactly. This is required to keep the CC BY-NC-ND file unmodified in the repository.
+
+L15. The Linux engine launched earlier (PID 146332) ended with `Exit code: 135 (SIGBUS)` after the rebuild replaced its running binary and assets. That is a rebuild-while-running artifact, not a game bug; the engine must be relaunched after the final build. Unrelated worktree changes observed after the build: `docs/img/CheetahEngineLogo.png` deleted and `docs/img/2026_10_24_0tt_Kleki.png` added, byte-identical (SHA256 `25be96c1...`), i.e. a rename by another actor. Left untouched and excluded from this feature's commits.
