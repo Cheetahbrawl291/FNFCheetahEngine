@@ -4,14 +4,16 @@ import flixel.FlxG;
 import flixel.text.FlxText;
 import flixel.util.FlxColor;
 import flixel.util.FlxAxes;
-import flixel.util.FlxTimer;
 
-import states.MainMenuState;
+import backend.ModchartEditorDetector;
 
-#if sys
-import sys.FileSystem;
-#end
-
+/**
+ * Entry point for the external LUA Modchart Editor by .bakugo / CommanderVideo.
+ *
+ * The script is CC BY-NC-ND 4.0, so it is downloaded by the player and never
+ * bundled with the engine. This state only explains how to use it and reports
+ * whether a recognized copy is installed.
+ */
 class ModChartEditorState extends MusicBeatState
 {
 	override function create()
@@ -21,114 +23,66 @@ class ModChartEditorState extends MusicBeatState
 		DiscordClient.changePresence("ModChart Editor", null);
 		#end
 
-		var txt:FlxText = new FlxText(0, 0, FlxG.width,
-			"MODCHART EDITOR\n\n" +
-			"FNF Lua Modchart Editor\n\n" +
-			"Place the downloaded tool in:\n" +
-			"tools/ModChartEditor/\n\n" +
-			"Searching for executable...\n\n" +
+		var txt:FlxText = new FlxText(0, 0, FlxG.width - 80,
+			"MODCHART EDITOR (LUA)\n\n" +
+			statusLine() + "\n\n" +
+			"1. Download 'LUA Modchart Editor' v1.2.2 by .bakugo from GameBanana.\n" +
+			"2. Put the .lua in assets/shared/scripts/ or mods/<mod>/scripts/.\n" +
+			"3. Enable Options > Modchart Editor > Lua Compatibility.\n" +
+			"4. Start a song and press 5 to open the editor.\n" +
+			"5. While testing a modchart, press BACKSPACE to return to it.\n\n" +
+			"Script not included: CC BY-NC-ND 4.0.\n\n" +
 			"Press BACK to return to the Editor Menu",
-		24);
-		txt.setFormat(Paths.font("vcr.ttf"), 24, FlxColor.WHITE, CENTER, FlxTextBorderStyle.OUTLINE, FlxColor.BLACK);
+			18);
+		txt.setFormat(Paths.font("vcr.ttf"), 18, FlxColor.WHITE, CENTER, FlxTextBorderStyle.OUTLINE, FlxColor.BLACK);
 		txt.screenCenter(FlxAxes.XY);
 		txt.borderSize = 2;
 		add(txt);
 
-		#if desktop
-		#if sys
-		var paths:Array<String> = [
-			"/home/dante/Descargas/FNF-CheetahEngineDevbuildv1/ModChartEditor/",
-			Sys.getCwd() + "/ModChartEditor/",
-			Sys.getCwd() + "/../../../ModChartEditor/",
-			"../../../ModChartEditor/",
-			"../../ModChartEditor/",
-			"../ModChartEditor/",
-			"ModChartEditor/",
-			"../../../../ModChartEditor/",
-			"tools/ModChartEditor/",
-			"./ModChartEditor/"
-		];
-		var launched:Bool = false;
-
-		for (toolPath in paths)
-		{
-			if (launched) break;
-			if (!FileSystem.exists(toolPath)) continue;
-
-			var exe:String = toolPath + "ModChartEditor.exe";
-			if (!FileSystem.exists(exe)) exe = toolPath + "FNF Lua Modchart Editor.exe";
-			if (!FileSystem.exists(exe)) exe = toolPath + "Modchart Editor.exe";
-			if (!FileSystem.exists(exe)) exe = toolPath + "Lua Modchart Editor.exe";
-			if (!FileSystem.exists(exe)) exe = toolPath + "modchart_editor";
-
-			if (!FileSystem.exists(exe))
-			{
-				try
-				{
-					var files:Array<String> = FileSystem.readDirectory(toolPath);
-					for (file in files)
-					{
-						if (StringTools.endsWith(file.toLowerCase(), ".exe"))
-						{
-							exe = toolPath + file;
-							break;
-						}
-						if (!StringTools.contains(file, ".") && !FileSystem.isDirectory(toolPath + file))
-						{
-							exe = toolPath + file;
-							break;
-						}
-					}
-				}
-				catch(e:Dynamic) {}
-			}
-
-			if (FileSystem.exists(exe) && !FileSystem.isDirectory(exe))
-			{
-				txt.text = "MODCHART EDITOR\n\n" +
-					"Launching ModChartEditor.exe...\n\n" +
-					"Opening in a new window.\n\n" +
-					"Press BACK to return to the Editor Menu";
-				txt.screenCenter(FlxAxes.XY);
-
-				#if windows
-				Sys.command("cmd", ["/c", "start", "", exe]);
-				#elseif linux
-				Sys.command("wine", [exe]);
-				#elseif mac
-				Sys.command("open", ["-a", "Wine", exe]);
-				#end
-
-				new FlxTimer().start(1, function(tmr:FlxTimer)
-				{
-					MusicBeatState.switchState(new MasterEditorMenu());
-				});
-				super.create();
-				return;
-			}
-		}
-
-		txt.text = "MODCHART EDITOR\n\n" +
-			"ModChartEditor.exe not found.\n\n" +
-			"Place it in:\n" +
-			"./ModChartEditor/ModChartEditor.exe\n\n" +
-			"Press BACK to return to the Editor Menu";
-		txt.screenCenter(FlxAxes.XY);
-		#else
-		CoolUtil.browserLoad("https://gamebanana.com/tools/10566#Files");
-		#end
-		#end
-
 		super.create();
 	}
 
+	function statusLine():String
+	{
+		#if !LUA_ALLOWED
+		return 'Status: Lua is disabled in this build.';
+		#else
+		if(!ClientPrefs.data.modchartEditorCompat)
+			return 'Status: compatibility OFF. Enable Options > Modchart Editor > Lua Compatibility.';
+
+		var path = findEditorScript();
+		if(path == null)
+			return 'Status: editor script NOT FOUND. Place the downloaded .lua in a scripts folder.';
+		return 'Status: editor script FOUND\n' + path;
+		#end
+	}
+
+	#if LUA_ALLOWED
+	function findEditorScript():String
+	{
+		#if (sys && MODS_ALLOWED)
+		for(folder in Mods.directoriesWithFile(Paths.getSharedPath(), 'scripts/'))
+		{
+			for(file in sys.FileSystem.readDirectory(folder))
+			{
+				if(!file.toLowerCase().endsWith('.lua')) continue;
+				var path = folder + file;
+				try
+				{
+					if(ModchartEditorDetector.isEditorSource(sys.io.File.getContent(path))) return path;
+				}
+				catch(e:Dynamic) {}
+			}
+		}
+		#end
+		return null;
+	}
+	#end
+
 	override function update(elapsed:Float)
 	{
-		if (controls.BACK)
-		{
+		if(controls.BACK)
 			MusicBeatState.switchState(new MasterEditorMenu());
-		}
-
 		super.update(elapsed);
 	}
 }

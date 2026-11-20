@@ -30,6 +30,9 @@ typedef SwagSong =
 
 	@:optional var arrowSkin:String;
 	@:optional var splashSkin:String;
+
+	// Runtime scratch space used by the external LUA Modchart Editor.
+	@:optional var modchartEditorMemory:Dynamic;
 }
 
 typedef SwagSection =
