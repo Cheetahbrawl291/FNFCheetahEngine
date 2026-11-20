@@ -6,12 +6,13 @@ The editor menu no longer launches a separate `.exe`. The [LUA Modchart Editor](
 
 ## Quick path
 
-1. Start any song and press **5**. The song restarts with the editor active.
-2. Build or edit a modchart. Exports go to `mods/savedModcharts/`.
-3. While testing a modchart, press **BACKSPACE** to return to the editing UI.
-4. Press **ESC** in the editor to exit.
+1. Open **Editors → Modchart Editor**. The screen lists every freeplay song and its status.
+2. Pick a song with **UP/DOWN** and press **ENTER**. The song starts with the editor already open — no need to press 5.
+3. Build or edit a modchart. Exports go to `mods/savedModcharts/`.
+4. While testing a modchart, press **BACKSPACE** to return to the editing UI.
+5. Press **ESC** in the editor to exit.
 
-The menu entry **Editors → Modchart Editor** shows whether the script was detected and whether compatibility is on.
+Pressing **5** inside a song still opens the editor if you entered the song some other way. The picker reuses the engine's normal week list, so songs from enabled mods are included.
 
 ## Details
 
@@ -27,7 +28,8 @@ The menu entry **Editors → Modchart Editor** shows whether the script was dete
 
 ## Checklist
 
-- [ ] Pressing **5** in a song opens the editor after a restart.
+- [ ] The editor menu lists songs; choosing one starts that song with the editor open.
+- [ ] Pressing **5** in a song started elsewhere still opens the editor after a restart.
 - [ ] The editor menu reports `editor script FOUND` and `compatibility ON`.
 - [ ] Exported modcharts appear under `mods/savedModcharts/`.
 - [ ] Turning the switch off restores the normal engine version for all scripts.
@@ -37,8 +39,8 @@ The menu entry **Editors → Modchart Editor** shows whether the script was dete
 Local verification covers the detector test, static checks and a Linux build only. Windows runtime checks belong to the user's friend:
 
 1. `lime build windows -debug`.
-2. Open **Editors → Modchart Editor** and confirm the script is detected with compatibility on.
-3. Start a song, press **5**, confirm the editor UI opens after restart.
+2. Open **Editors → Modchart Editor** and confirm the song list is populated and the script is detected with compatibility on.
+3. Select a song, press **ENTER**, confirm that song loads with the editor UI open immediately (no 5 press).
 4. Create one strum action, use **Test**, then press **BACKSPACE** to return.
 5. Save a modchart and confirm the generated file in `mods/savedModcharts/`.
 6. Disable **Lua Compatibility**, restart the game and confirm other Lua scripts still work.
