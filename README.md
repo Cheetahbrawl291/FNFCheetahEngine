@@ -52,7 +52,6 @@ Downloads are capped at 400 MB because the archive is held in memory. Before the
 - Custom achievements can have their own icon under `images/`, with a live preview in the editor.
 - A new **Unlock Achievement** chart editor event unlocks an achievement by save key when playback reaches it.
 - All other existing editors keep working as before.
-- **Modchart Editor** is now the bundled [LUA Modchart Editor](https://gamebanana.com/scripts/12931) v1.2.2 by .bakugo / CommanderVideo. Press **5** in a song to open it; exports go to `mods/savedModcharts/`. The script is shipped unmodified under CC BY-NC-ND 4.0; see [docs/MODCHART_EDITOR.md](docs/MODCHART_EDITOR.md) for details.
 
 ### Base game content
 
@@ -71,11 +70,10 @@ Requires `sl-windows-api` (`haxelib install sl-windows-api`) plus the Windows to
 
 ## Credits
 
-### Cheetah Engine Team
+### Cheetah Engine Team<br/>
 
-[Cheetah](https://www.youtube.com/@CheetahTheGamer) - Owner
-[IamDanteDav](https://www.youtube.com/@IamDanteDev) - Coder
-[Commander Video](https://gamebanana.com/members/1787065) - Modchart editor
+[Cheetah](https://www.youtube.com/@CheetahTheGamer) - Owner<br/>[IamDanteDav](https://www.youtube.com/@IamDanteDev) - Coder<br/>[Commander Video](https://gamebanana.com/members/1787065) - [Modchart editor](https://gamebanana.com/scripts/12931)<br/>[Slushi](https://github.com/Slushi-Github) - [Windows API](https://github.com/Slushi-Github/SL-Windows-API/)<br/>
+
 
 ### Psych Engine Team<br/>
 
