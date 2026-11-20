@@ -86,6 +86,20 @@ class ChartingState extends MusicBeatState implements PsychUIEventHandler.PsychU
 		['Set Property', "Value 1: Variable name\nValue 2: New value"],
 		['Play Sound', "Value 1: Sound file name\nValue 2: Volume (Default: 1), ranges from 0 to 1"],
 		['Unlock Achievement', "Unlocks an achievement the moment this event is reached.\nValue 1: Achievement save key (check the Achievement Editor)\nValue 2: Unused, leave it blank"]
+		#if windows
+		,['Window Border Color', "Windows only. Changes the game window border color.\nValue 1: R,G,B (0-255 each), for example 255,0,0.\nWindows 11 only."]
+		,['Window Text Color', "Windows only. Changes the game window title-bar text color.\nValue 1: R,G,B (0-255 each).\nWindows 11 only."]
+		,['Window Dark Mode', "Windows only. Toggles the window title bar dark mode.\nValue 1: true/false (or 1/0), blank = true."]
+		,['Window Corner', "Windows only. Sets the window corner style.\nValue 1: 0 = default, 1 = none, 2 = round, 3 = small round."]
+		,['Window Opacity', "Windows only. Sets the game window opacity.\nValue 1: 0 to 1, for example 0.75."]
+		,['Center Window', "Windows only. Centers the game window on the screen.\nBoth values are unused."]
+		,['Hide Taskbar', "Windows only. Requires the Taskbar & Desktop Icons setting.\nValue 1: true/false (or 1/0), blank = true."]
+		,['Hide Desktop Icons', "Windows only. Requires the Taskbar & Desktop Icons setting.\nValue 1: true/false (or 1/0), blank = true."]
+		,['Move Desktop Icons', "Windows only. Requires the Taskbar & Desktop Icons setting.\nValue 1: X position, Value 2: Y position."]
+		,['Change Wallpaper', "Windows only. Requires the Wallpaper Changes setting.\nValue 1: image path relative to the game folder.\nThe original wallpaper is restored on exit."]
+		,['Screen Capture', "Windows only. Requires the Screen Captures setting.\nValue 1: output path relative to the game folder."]
+		,['GDI Effect', "Windows only. Requires the GDI Effects setting.\nValue 1: effect name (DrawIcons, ScreenBlink, ScreenGlitches,\nScreenShake, ScreenTunnel, SetTitleTextToWindows).\nValue 2: on/off, optionally on:waitMs (e.g. on:50)."]
+		#end
 	];
 	
 	public static var keysArray:Array<FlxKey> = [ONE, TWO, THREE, FOUR, FIVE, SIX, SEVEN, EIGHT]; //Used for Vortex Editor

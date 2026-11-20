@@ -5,6 +5,9 @@ import backend.StageData;
 import backend.WeekData;
 import backend.Song;
 import backend.Rating;
+#if windows
+import backend.WindowsIntegrations;
+#end
 
 import flixel.FlxBasic;
 import flixel.FlxObject;
@@ -2311,6 +2314,33 @@ class PlayState extends MusicBeatState
 					else FlxG.log.warn('Unlock Achievement: unknown achievement "$achieveName"');
 					#end
 				}
+			#end
+
+			#if windows
+			case 'Window Border Color':
+				WindowsIntegrations.setBorderColor(value1);
+			case 'Window Text Color':
+				WindowsIntegrations.setTextColor(value1);
+			case 'Window Dark Mode':
+				WindowsIntegrations.setDarkMode(value1);
+			case 'Window Corner':
+				WindowsIntegrations.setCorner(value1);
+			case 'Window Opacity':
+				WindowsIntegrations.setOpacity(value1);
+			case 'Center Window':
+				WindowsIntegrations.centerWindow();
+			case 'Hide Taskbar':
+				WindowsIntegrations.hideTaskbar(value1);
+			case 'Hide Desktop Icons':
+				WindowsIntegrations.hideDesktopIcons(value1);
+			case 'Move Desktop Icons':
+				WindowsIntegrations.moveDesktop(value1, value2);
+			case 'Change Wallpaper':
+				WindowsIntegrations.changeWallpaper(value1);
+			case 'Screen Capture':
+				WindowsIntegrations.screenCapture(value1);
+			case 'GDI Effect':
+				WindowsIntegrations.gdiEffect(value1, value2);
 			#end
 		}
 

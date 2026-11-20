@@ -184,6 +184,15 @@ class Main extends Sprite
 		Lib.current.loaderInfo.uncaughtErrorEvents.addEventListener(UncaughtErrorEvent.UNCAUGHT_ERROR, onCrash);
 		#end
 
+		#if windows
+		backend.WindowsIntegrations.init();
+		// Lime dispatches this when the OS closes the window. Cleanup is
+		// synchronous, so the desktop is back to normal before the process ends.
+		Application.current.onExit.add(function() {
+			backend.WindowsIntegrations.restoreAll();
+		});
+		#end
+
 		#if DISCORD_ALLOWED
 		DiscordClient.prepare();
 		#end
@@ -254,6 +263,9 @@ class Main extends Sprite
 		Application.current.window.alert(errMsg, "Error!");
 		#if DISCORD_ALLOWED
 		DiscordClient.shutdown();
+		#end
+		#if windows
+		backend.WindowsIntegrations.restoreAll();
 		#end
 		Sys.exit(1);
 	}
