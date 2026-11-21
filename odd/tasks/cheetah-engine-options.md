@@ -16,7 +16,7 @@ Baseline for this feature: `a6ef51d`.
 - T1 — S1,S2,S3,S4 — New `CheetahOptionsSubState` + OptionsState wiring + main-menu reset helper with confirmation — route: inline — Risk: none — status: done — commit: `14590dd`
 - T2 — S1,S5 — Windows API master gate in ClientPrefs + PlayState dispatch — route: inline — Risk: item 3 (shared event dispatch used by all charts) — status: done — commit: `fa4c17f`
 - T3 — S1,S6 — Erect unification gate in ClientPrefs + FreeplayState — route: inline — Risk: item 3 (shared Freeplay song loading) — status: done — commit: `fe2dd8a`
-- T4 — S7 — Pure tests for reset target resolution + erect gate decisions, focused suites, full build, README/docs — route: inline — Risk: none — status: done — commit: `6a246cf`
+- T4 — S7 — Pure tests for reset target resolution + erect gate decisions, focused suites, full build, README/docs — route: inline — Risk: none — status: done — commit: HEAD (this docs + probes commit)
 
 ## Log
 - L1: "podrias añadie al menu de opciones un cheetah engine options que te permite reiniciar y quitar el main menu custom, desactivar eventos de windows api y que puedas activar la unificacion de erect mixes y canciones normales"
@@ -32,3 +32,10 @@ Baseline for this feature: `a6ef51d`.
 - L11: Design — added pure `ErectRemix.hideFromFreeplay(unification, name)` used by FreeplayState so the two-site gate has one testable decision function.
 - L12: Verification — `MenuResetTest` 9 PASS; `ErectRemixTest` 26 PASS (21 existing + 5 new gate checks, compiled with `-D MODS_ALLOWED`); `haxelib run lime build Project.xml linux` exit 0 with no errors. GUI/runtime behavior not verified (user declined remote/GUI access).
 - L13: Fix — `ErectRemixTest` needed `-D MODS_ALLOWED` in its scratch compile header because the non-mods branch references `openfl.utils.Assets`, unavailable in the scratch classpath.
+- L14: Native RDD assess over `a6ef51d..HEAD` with explicit untracked exclusion → `medium`, `review_due: false`, reason `under_budget`; no native review transaction started. First assess attempt failed on the pre-existing untracked files and reported `unassessable`; rerun with `--untracked-scope=exclude` and the tool-supplied inventory hash produced the real tier.
+- L15: Independent verifier (`gentle-ai-verify`) returned no blockers. S1, S2, S3, S4, S6, S7 met; S5 static checks met but Windows runtime unverified on this Linux host. Own probes: 38 PASS path formulas (null/empty/space/slash/`..`/unicode), real deletion idempotence on isolated files, 36 PASS erect differential across 14 names, 6 PASS guard semantics. It confirmed all 12 Windows cases carry the guard, no top-level `default:`, exit cleanup ungated, and `winApiEvents` default true.
+- L16: Verifier build note — its first `lime build linux` hit SIGTERM/143 from OOM at default hxcpp parallelism; corrected run with `HXCPP_COMPILE_THREADS=4` exited 0. Parent's own build at default threads also exited 0.
+- L17: Verifier durable probes added to the repo and re-run by the parent: `tests/MenuResetBaselineMatchTest.hx` (S4, 21 PASS) and `tests/ErectGateDifferentialTest.hx` (S6, PASS).
+- L18: Advisory (pre-existing, not change-caused) — `ClientPrefs.hx:207-209` Reflect loop overwrites a pref with an explicit `null` in a hand-edited save; `winApiEvents:null` would close the gate. Safe direction, untouched.
+- L19: Residual gap — S5 Windows runtime needs a Windows host: `haxelib run lime build Project.xml windows`, then exercise all 12 event names with the pref off (expect no OS effect) and on, and confirm `restoreAll()` on exit.
+- L20: GUI opened locally by the user's request (`DISPLAY=:0`, PID 304763) so the user can exercise the menu; no remote control or automated GUI input was used. Runtime GUI outcome still user-reported, not agent-verified.
