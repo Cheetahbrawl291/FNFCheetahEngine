@@ -4,7 +4,7 @@ import backend.ErectRemix;
  * Deterministic checks for erect remix name resolution. Copy this file,
  * `source/backend/ErectRemix.hx` and `tests/erect-remix/backend/Paths.hx`
  * into a scratch directory, then run:
- *   haxe -cp <scratch> -main ErectRemixTest -neko <scratch>/test.n
+ *   haxe -D MODS_ALLOWED -cp <scratch> -main ErectRemixTest -neko <scratch>/test.n
  *   neko <scratch>/test.n
  */
 class ErectRemixTest
@@ -42,5 +42,12 @@ class ErectRemixTest
 		check(ErectRemix.isSpookyErect('spookyErect'), 'spooky erect detected');
 		check(!ErectRemix.isSpookyErect('spooky'), 'base spooky not erect');
 		check(!ErectRemix.isSpookyErect('mallErect'), 'other erect stage not spooky');
+
+		// Cheetah Options unification gate (S6).
+		check(ErectRemix.hideFromFreeplay(true, 'Bopeebo Erect'), 'on + erect -> hidden');
+		check(!ErectRemix.hideFromFreeplay(true, 'Bopeebo'), 'on + base -> visible');
+		check(!ErectRemix.hideFromFreeplay(false, 'Bopeebo Erect'), 'off + erect -> visible standalone');
+		check(!ErectRemix.hideFromFreeplay(false, 'Bopeebo'), 'off + base -> visible');
+		check(!ErectRemix.hideFromFreeplay(false, null), 'off + null -> visible');
 	}
 }

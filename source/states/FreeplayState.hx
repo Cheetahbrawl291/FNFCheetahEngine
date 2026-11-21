@@ -94,6 +94,8 @@ class FreeplayState extends MusicBeatState
 		}
 
 		erectFolders.clear();
+		// Cheetah Options: when unification is off, erect mixes stay standalone.
+		if(ClientPrefs.data.erectMixUnification)
 		for (weekName in WeekData.weeksList)
 		{
 			var remixWeek:WeekData = WeekData.weeksLoaded.get(weekName);
@@ -129,7 +131,7 @@ class FreeplayState extends MusicBeatState
 			WeekData.setDirectoryFromWeek(leWeek);
 			for (song in leWeek.songs)
 			{
-				if(ErectRemix.isErectName(Std.string(song[0]))) continue;
+				if(ErectRemix.hideFromFreeplay(ClientPrefs.data.erectMixUnification, Std.string(song[0]))) continue;
 
 				var colors:Array<Int> = song[2];
 				if(colors == null || colors.length < 3)

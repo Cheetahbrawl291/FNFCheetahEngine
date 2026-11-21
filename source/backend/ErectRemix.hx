@@ -20,6 +20,16 @@ class ErectRemix
 		return Paths.formatToSongPath(name).endsWith(SUFFIX);
 	}
 
+	/**
+	 * Cheetah Options unification gate. When enabled, erect mixes are folded
+	 * into their base song and must be hidden from the ordinary song list.
+	 * When disabled they stay as standalone entries and must not be hidden.
+	 */
+	public static inline function hideFromFreeplay(unification:Bool, ?name:String):Bool
+	{
+		return unification && isErectName(name);
+	}
+
 	/** "Bopeebo Erect" -> "Bopeebo". Non-erect names are returned unchanged. */
 	public static function baseName(?name:String):String
 	{
