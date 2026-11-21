@@ -50,6 +50,7 @@ import states.TitleState;
 	public var hideHud:Bool = false;
 	public var noteOffset:Int = 0;
 	public var videoOffset:Int = 0; // visual-only note travel offset, in milliseconds
+	public var hudcustomization:Bool = false; // backs the Gameplay > Customization "Enable?" toggle
 	public var arrowRGB:Array<Array<FlxColor>> = [
 		[0xFFC24B99, 0xFFFFFFFF, 0xFF3C1F56],
 		[0xFF00FFFF, 0xFFFFFFFF, 0xFF1542B7],
