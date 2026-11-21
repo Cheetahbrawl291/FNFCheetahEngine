@@ -540,7 +540,9 @@ class Note extends FlxSprite
 		var strumAlpha:Float = myStrum.alpha;
 		var strumDirection:Float = myStrum.direction;
 
-		distance = (0.45 * (Conductor.songPosition - strumTime) * songSpeed * multSpeed);
+		// Video offset shifts only the rendered position. Hit timing still uses
+		// strumTime (which already includes the audio noteOffset).
+		distance = (0.45 * ((Conductor.songPosition + ClientPrefs.data.videoOffset) - strumTime) * songSpeed * multSpeed);
 		if (!myStrum.downScroll) distance *= -1;
 
 		var angleDir = strumDirection * Math.PI / 180;

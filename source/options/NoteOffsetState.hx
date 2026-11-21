@@ -1,23 +1,23 @@
 package options;
 
+import backend.CalibrationScroll;
+import backend.MainMenuConfig;
 import backend.OffsetCalibrator;
-import backend.StageData;
-import objects.Character;
 import objects.Bar;
+import objects.Note;
 import flixel.addons.display.shapes.FlxShapeCircle;
 import flixel.input.gamepad.FlxGamepadInputID;
 
-import states.stages.StageWeek1 as BackgroundStage;
-
 class NoteOffsetState extends MusicBeatState
 {
-	var stageDirectory:String = 'week1';
-	var boyfriend:Character;
-	var gf:Character;
-
 	public var camHUD:FlxCamera;
 	public var camGame:FlxCamera;
 	public var camOther:FlxCamera;
+
+	var menuBg:FlxSprite;
+	var receptor:FlxSprite;
+	var risingArrows:Array<FlxSprite> = [];
+	var receptorY:Float = 0;
 
 	var coolText:FlxText;
 	var rating:FlxSprite;
@@ -29,13 +29,17 @@ class NoteOffsetState extends MusicBeatState
 	var delayMax:Int = 500;
 	var timeBar:Bar;
 	var timeTxt:FlxText;
-	var beatText:Alphabet;
-	var beatTween:FlxTween;
-
 	var changeModeText:FlxText;
 	var autoStatusText:FlxText;
-	var autoCalibrating:Bool = false;
+
+	// 0 = combo, 1 = audio offset, 2 = video offset
+	var mode:Int = 0;
+	// 0 = idle, 1 = audio tap pass, 2 = visual tap pass
+	var calibrationPhase:Int = 0;
 	var autoTaps:Array<Float> = [];
+	var calibratedAudio:Int = 0;
+
+	var drumsSound:FlxSound;
 
 	var controllerPointer:FlxSprite;
 	var _lastControllerMode:Bool = false;
@@ -57,25 +61,20 @@ class NoteOffsetState extends MusicBeatState
 		camOther.bgColor.alpha = 0;
 		FlxG.cameras.add(camOther, false);
 
-		FlxG.camera.scroll.set(120, 130);
-
 		persistentUpdate = true;
 		FlxG.sound.pause();
 
-		// Stage
-		Paths.setCurrentLevel(stageDirectory);
-		new BackgroundStage();
-
-		// Characters
-		gf = new Character(400, 130, 'gf');
-		gf.x += gf.positionArray[0];
-		gf.y += gf.positionArray[1];
-		gf.scrollFactor.set(0.95, 0.95);
-		boyfriend = new Character(770, 100, 'bf', true);
-		boyfriend.x += boyfriend.positionArray[0];
-		boyfriend.y += boyfriend.positionArray[1];
-		add(gf);
-		add(boyfriend);
+		// Same backdrop as the main menu, so the calibration reads as part of it.
+		var menuConfig = MainMenuConfig.load();
+		MainMenuConfig.sanitize(menuConfig);
+		var yScroll:Float = menuConfig.bgScrollSpeed;
+		menuBg = new FlxSprite(-80).loadGraphic(Paths.image(menuConfig.bgImage));
+		menuBg.antialiasing = ClientPrefs.data.antialiasing;
+		menuBg.scrollFactor.set(0, yScroll);
+		menuBg.setGraphicSize(Std.int(menuBg.width * 1.175));
+		menuBg.updateHitbox();
+		menuBg.screenCenter();
+		add(menuBg);
 
 		// Combo stuff
 		coolText = new FlxText(0, 0, 0, '', 32);
@@ -87,7 +86,7 @@ class NoteOffsetState extends MusicBeatState
 		rating.antialiasing = ClientPrefs.data.antialiasing;
 		rating.setGraphicSize(Std.int(rating.width * 0.7));
 		rating.updateHitbox();
-		
+
 		add(rating);
 
 		comboNums = new FlxSpriteGroup();
@@ -119,15 +118,23 @@ class NoteOffsetState extends MusicBeatState
 
 		repositionCombo();
 
+		// Gameplay-style calibration lane: one fixed receptor, arrows rising to it.
+		receptorY = FlxG.height * 0.5;
+		receptor = makeArrow(1, 'arrowUP0000', false);
+		receptor.screenCenter(X);
+		receptor.y = receptorY - receptor.height / 2;
+		add(receptor);
+
+		for (i in 0...(CalibrationScroll.BEATS_BEHIND + CalibrationScroll.BEATS_AHEAD))
+		{
+			var arrow:FlxSprite = makeArrow(0.85, 'green0000', true);
+			arrow.screenCenter(X);
+			arrow.visible = false;
+			risingArrows.push(arrow);
+			add(arrow);
+		}
+
 		// Note delay stuff
-		beatText = new Alphabet(0, 0, Language.getPhrase('delay_beat_hit', 'Beat Hit!'), true);
-		beatText.setScale(0.6, 0.6);
-		beatText.x += 260;
-		beatText.alpha = 0;
-		beatText.acceleration.y = 250;
-		beatText.visible = false;
-		add(beatText);
-		
 		timeTxt = new FlxText(0, 600, FlxG.width, "", 32);
 		timeTxt.setFormat(Paths.font("vcr.ttf"), 32, FlxColor.WHITE, CENTER, FlxTextBorderStyle.OUTLINE, FlxColor.BLACK);
 		timeTxt.scrollFactor.set();
@@ -135,9 +142,9 @@ class NoteOffsetState extends MusicBeatState
 		timeTxt.visible = false;
 		timeTxt.cameras = [camHUD];
 
-		barPercent = ClientPrefs.data.noteOffset;
+		barPercent = currentOffset();
 		updateNoteDelay();
-		
+
 		timeBar = new Bar(0, timeTxt.y + (timeTxt.height / 3), 'healthBar', function() return barPercent, delayMin, delayMax);
 		timeBar.scrollFactor.set();
 		timeBar.screenCenter(X);
@@ -176,14 +183,42 @@ class NoteOffsetState extends MusicBeatState
 		controllerPointer.alpha = 0.6;
 		controllerPointer.cameras = [camHUD];
 		add(controllerPointer);
-		
+
 		updateMode();
 		_lastControllerMode = true;
 
-		Conductor.bpm = 128.0;
-		FlxG.sound.playMusic(Paths.music('offsetSong'), 1, true);
+		// Both bundled offset loops are 100 BPM (76.8 s = 128 beats).
+		Conductor.bpm = 100.0;
+		FlxG.sound.playMusic(Paths.music('offset/offsetsLoop'), 0.5, true);
+		drumsSound = FlxG.sound.load(Paths.music('offset/drumsLoop'), 1, true);
 
 		super.create();
+	}
+
+	function makeArrow(scale:Float, framePrefix:String, useUserColors:Bool):FlxSprite
+	{
+		var arrow:FlxSprite = new FlxSprite();
+		arrow.frames = Paths.getSparrowAtlas('noteSkins/NOTE_assets');
+		arrow.animation.addByPrefix('note', framePrefix, 24, false);
+		arrow.animation.play('note');
+		// Lane 2 is UP; its RGB palette is the one the user configured in Note Colors.
+		if(useUserColors) arrow.shader = Note.initializeGlobalRGBShader(2).shader;
+		arrow.antialiasing = ClientPrefs.data.antialiasing;
+		arrow.setGraphicSize(Std.int(arrow.width * scale));
+		arrow.updateHitbox();
+		arrow.cameras = [camHUD];
+		return arrow;
+	}
+
+	function currentOffset():Int
+	{
+		return mode == 2 ? ClientPrefs.data.videoOffset : ClientPrefs.data.noteOffset;
+	}
+
+	function setCurrentOffset(value:Int):Void
+	{
+		if(mode == 2) ClientPrefs.data.videoOffset = value;
+		else ClientPrefs.data.noteOffset = value;
 	}
 
 	var holdTime:Float = 0;
@@ -209,11 +244,9 @@ class NoteOffsetState extends MusicBeatState
 
 		if(controls.controllerMode != _lastControllerMode)
 		{
-			//trace('changed controller mode');
 			FlxG.mouse.visible = !controls.controllerMode;
 			controllerPointer.visible = controls.controllerMode;
 
-			// changed to controller mid state
 			if(controls.controllerMode)
 			{
 				var mousePos = FlxG.mouse.getScreenPosition(camHUD);
@@ -224,10 +257,10 @@ class NoteOffsetState extends MusicBeatState
 			_lastControllerMode = controls.controllerMode;
 		}
 
-		if(!onComboMenu && !autoCalibrating && (FlxG.keys.justPressed.C || FlxG.gamepads.anyJustPressed(FlxGamepadInputID.Y)))
+		if(calibrationPhase == 0 && mode > 0 && (FlxG.keys.justPressed.C || FlxG.gamepads.anyJustPressed(FlxGamepadInputID.Y)))
 			startAutoCalibration();
 
-		if(autoCalibrating)
+		if(calibrationPhase > 0)
 			collectAutoTap();
 
 		if(onComboMenu)
@@ -242,7 +275,7 @@ class NoteOffsetState extends MusicBeatState
 						FlxG.keys.justPressed.RIGHT,
 						FlxG.keys.justPressed.UP,
 						FlxG.keys.justPressed.DOWN,
-					
+
 						FlxG.keys.justPressed.A,
 						FlxG.keys.justPressed.D,
 						FlxG.keys.justPressed.W,
@@ -256,7 +289,7 @@ class NoteOffsetState extends MusicBeatState
 						FlxG.gamepads.anyJustPressed(DPAD_RIGHT),
 						FlxG.gamepads.anyJustPressed(DPAD_UP),
 						FlxG.gamepads.anyJustPressed(DPAD_DOWN),
-					
+
 						FlxG.gamepads.anyJustPressed(RIGHT_STICK_DIGITAL_LEFT),
 						FlxG.gamepads.anyJustPressed(RIGHT_STICK_DIGITAL_RIGHT),
 						FlxG.gamepads.anyJustPressed(RIGHT_STICK_DIGITAL_UP),
@@ -294,7 +327,7 @@ class NoteOffsetState extends MusicBeatState
 					repositionCombo();
 				}
 			}
-			
+
 			// controller things
 			var analogX:Float = 0;
 			var analogY:Float = 0;
@@ -332,7 +365,6 @@ class NoteOffsetState extends MusicBeatState
 					holdingObjectType = true;
 					startComboOffset.x = ClientPrefs.data.comboOffset[2];
 					startComboOffset.y = ClientPrefs.data.comboOffset[3];
-					//trace('yo bro');
 				}
 				else if (startMousePos.x - rating.x >= 0 && startMousePos.x - rating.x <= rating.width &&
 						 startMousePos.y - rating.y >= 0 && startMousePos.y - rating.y <= rating.height)
@@ -340,12 +372,10 @@ class NoteOffsetState extends MusicBeatState
 					holdingObjectType = false;
 					startComboOffset.x = ClientPrefs.data.comboOffset[0];
 					startComboOffset.y = ClientPrefs.data.comboOffset[1];
-					//trace('heya');
 				}
 			}
 			if(FlxG.mouse.justReleased || gamepadReleased) {
 				holdingObjectType = null;
-				//trace('dead');
 			}
 
 			if(holdingObjectType != null)
@@ -374,16 +404,16 @@ class NoteOffsetState extends MusicBeatState
 				repositionCombo();
 			}
 		}
-		else if(!autoCalibrating)
+		else if(calibrationPhase == 0)
 		{
 			if(controls.UI_LEFT_P)
 			{
-				barPercent = Math.max(delayMin, Math.min(ClientPrefs.data.noteOffset - 1, delayMax));
+				barPercent = Math.max(delayMin, Math.min(currentOffset() - 1, delayMax));
 				updateNoteDelay();
 			}
 			else if(controls.UI_RIGHT_P)
 			{
-				barPercent = Math.max(delayMin, Math.min(ClientPrefs.data.noteOffset + 1, delayMax));
+				barPercent = Math.max(delayMin, Math.min(currentOffset() + 1, delayMax));
 				updateNoteDelay();
 			}
 
@@ -411,19 +441,21 @@ class NoteOffsetState extends MusicBeatState
 			}
 		}
 
-		if(!autoCalibrating && ((!controls.controllerMode && controls.ACCEPT) ||
+		if(calibrationPhase == 0 && ((!controls.controllerMode && controls.ACCEPT) ||
 		(controls.controllerMode && FlxG.gamepads.anyJustPressed(START))))
 		{
-			onComboMenu = !onComboMenu;
+			mode = (mode + 1) % 3;
+			onComboMenu = (mode == 0);
+			barPercent = currentOffset();
+			updateNoteDelay();
 			updateMode();
 		}
 
 		if(controls.BACK)
 		{
-			if(zoomTween != null) zoomTween.cancel();
-			if(beatTween != null) beatTween.cancel();
-
+			stopCalibration();
 			persistentUpdate = false;
+			ClientPrefs.saveSettings();
 			MusicBeatState.switchState(new options.OptionsState());
 			if(OptionsState.onPlayState)
 			{
@@ -436,49 +468,49 @@ class NoteOffsetState extends MusicBeatState
 			FlxG.mouse.visible = false;
 		}
 
+		updateRisingArrows();
+		if(receptor.scale.x > 1)
+		{
+			var next:Float = Math.max(1, receptor.scale.x - elapsed * 1.5);
+			receptor.scale.set(next, next);
+		}
+
 		Conductor.songPosition = FlxG.sound.music.time;
 		super.update(elapsed);
 	}
 
-	var zoomTween:FlxTween;
+	function updateRisingArrows():Void
+	{
+		var beatInterval:Float = Conductor.crochet;
+		var base:Int = CalibrationScroll.currentBeatIndex(Conductor.songPosition, beatInterval);
+		var songPosition:Float = Conductor.songPosition;
+		var calibrating:Bool = calibrationPhase > 0 && mode > 0;
+
+		for (i in 0...risingArrows.length)
+		{
+			var arrow:FlxSprite = risingArrows[i];
+			// One beat yes, one beat no: notes sit either side of the current beat.
+			var beatIndex:Int = base + (i == 0 ? -CalibrationScroll.BEATS_BEHIND : CalibrationScroll.BEATS_AHEAD);
+			if(beatIndex < 0 || !calibrating)
+			{
+				arrow.visible = false;
+				continue;
+			}
+
+			var beatTime:Float = CalibrationScroll.beatTime(beatIndex, beatInterval);
+			var y:Float = CalibrationScroll.arrowY(receptorY - arrow.height / 2, beatTime, songPosition);
+			arrow.y = y;
+			arrow.visible = y > -arrow.height && y < FlxG.height + arrow.height;
+		}
+	}
+
 	var lastBeatHit:Int = -1;
 	override public function beatHit()
 	{
 		super.beatHit();
 
-		if(lastBeatHit == curBeat)
-		{
-			return;
-		}
-
-		if(curBeat % 2 == 0)
-		{
-			boyfriend.dance();
-			gf.dance();
-		}
-		
-		if(curBeat % 4 == 2)
-		{
-			FlxG.camera.zoom = 1.15;
-
-			if(zoomTween != null) zoomTween.cancel();
-			zoomTween = FlxTween.tween(FlxG.camera, {zoom: 1}, 1, {ease: FlxEase.circOut, onComplete: function(twn:FlxTween)
-				{
-					zoomTween = null;
-				}
-			});
-
-			beatText.alpha = 1;
-			beatText.y = 320;
-			beatText.velocity.y = -150;
-			if(beatTween != null) beatTween.cancel();
-			beatTween = FlxTween.tween(beatText, {alpha: 0}, 1, {ease: FlxEase.sineIn, onComplete: function(twn:FlxTween)
-				{
-					beatTween = null;
-				}
-			});
-		}
-
+		if(lastBeatHit == curBeat) return;
+		if(mode > 0) receptor.scale.set(1.18, 1.18);
 		lastBeatHit = curBeat;
 	}
 
@@ -528,21 +560,22 @@ class NoteOffsetState extends MusicBeatState
 
 	function updateNoteDelay()
 	{
-		ClientPrefs.data.noteOffset = Math.round(barPercent);
-		timeTxt.text = Language.getPhrase('delay_current_offset', 'Current offset: {1} ms', [Math.floor(barPercent)]);
+		setCurrentOffset(Math.round(barPercent));
+		timeTxt.text = Language.getPhrase('delay_current_offset', 'Current offset: {1} ms', [Math.floor(barPercent)]) +
+			'  (audio ' + ClientPrefs.data.noteOffset + ' / video ' + ClientPrefs.data.videoOffset + ')';
 	}
 
 	function updateMode()
 	{
+		onComboMenu = (mode == 0);
 		rating.visible = onComboMenu;
 		comboNums.visible = onComboMenu;
 		dumbTexts.visible = onComboMenu;
-		
+
 		timeBar.visible = !onComboMenu;
 		timeTxt.visible = !onComboMenu;
-		beatText.visible = !onComboMenu;
 		autoStatusText.visible = !onComboMenu;
-		if(!onComboMenu && !autoCalibrating)
+		if(!onComboMenu && calibrationPhase == 0)
 			autoStatusText.text = Language.getPhrase('auto_offset_hint', 'Press C / Y to auto-calibrate, then tap to the beat (8 taps).');
 
 		controllerPointer.visible = false;
@@ -553,13 +586,13 @@ class NoteOffsetState extends MusicBeatState
 			controllerPointer.visible = controls.controllerMode;
 		}
 
-		var str:String;
+		var str:String = switch(mode)
+		{
+			case 0: Language.getPhrase('combo_offset', 'Combo Offset');
+			case 1: Language.getPhrase('audio_offset', 'Audio Offset');
+			default: Language.getPhrase('video_offset', 'Video Offset');
+		};
 		var str2:String;
-		if(onComboMenu)
-			str = Language.getPhrase('combo_offset', 'Combo Offset');
-		else
-			str = Language.getPhrase('note_delay', 'Note/Beat Delay');
-
 		if(!controls.controllerMode)
 			str2 = Language.getPhrase('switch_on_accept', '(Press Accept to Switch)');
 		else
@@ -568,11 +601,32 @@ class NoteOffsetState extends MusicBeatState
 		changeModeText.text = '< ${str.toUpperCase()} ${str2.toUpperCase()} >';
 	}
 
+	function stopCalibration():Void
+	{
+		calibrationPhase = 0;
+		autoTaps = [];
+		if(drumsSound != null)
+		{
+			drumsSound.stop();
+			drumsSound.volume = 1;
+		}
+		if(FlxG.sound.music != null) FlxG.sound.music.volume = 0.5;
+	}
+
 	function startAutoCalibration():Void
 	{
-		autoCalibrating = true;
+		calibrationPhase = 1;
 		autoTaps = [];
-		autoStatusText.text = Language.getPhrase('auto_offset_tapping', 'Auto calibration: tap with the 4 note keys (8 taps).');
+		calibratedAudio = ClientPrefs.data.noteOffset;
+		if(drumsSound != null)
+		{
+			drumsSound.play();
+			// Align the drum loop's beat grid with the music's grid.
+			drumsSound.time = FlxG.sound.music.time % Conductor.crochet;
+			drumsSound.volume = 1;
+		}
+		if(FlxG.sound.music != null) FlxG.sound.music.volume = 0.35;
+		autoStatusText.text = Language.getPhrase('auto_offset_audio_hint', 'Audio calibration: tap to the beat (8 taps).');
 	}
 
 	function collectAutoTap():Void
@@ -593,17 +647,32 @@ class NoteOffsetState extends MusicBeatState
 		}
 
 		var result:Null<Int> = OffsetCalibrator.suggestOffset(autoTaps, Conductor.crochet);
-		autoCalibrating = false;
 		autoTaps = [];
 		if(result == null)
 		{
+			stopCalibration();
 			autoStatusText.text = Language.getPhrase('auto_offset_failed', 'Auto calibration failed. Try again.');
 			return;
 		}
 
-		barPercent = result;
-		updateNoteDelay();
+		if(calibrationPhase == 1)
+		{
+			calibratedAudio = result;
+			barPercent = result;
+			ClientPrefs.data.noteOffset = result;
+			updateNoteDelay();
+
+			calibrationPhase = 2;
+			if(drumsSound != null) drumsSound.volume = 0;
+			autoStatusText.text = Language.getPhrase('auto_offset_video_hint', 'Audio: {1} ms. Now tap when the arrow reaches the center (8 taps).', [result]);
+			return;
+		}
+
+		ClientPrefs.data.videoOffset = result;
+		stopCalibration();
 		ClientPrefs.saveSettings();
-		autoStatusText.text = Language.getPhrase('auto_offset_done', 'Auto offset: {1} ms (applied). Press C / Y to retry.', [result]);
+		barPercent = mode == 2 ? result : ClientPrefs.data.noteOffset;
+		updateNoteDelay();
+		autoStatusText.text = Language.getPhrase('auto_offset_done_both', 'Audio: {1} ms / Video: {2} ms (applied). Press C / Y to retry.', [calibratedAudio, result]);
 	}
 }

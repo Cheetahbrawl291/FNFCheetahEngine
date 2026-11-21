@@ -25,7 +25,7 @@ Found in **Options → Accessibility**:
 - **Colorblind-safe palettes** for lane colors, applied to arrows, strums and note splashes. `Off` keeps the original behavior and your custom Note Colors.
 - **Reduced camera shake** damps every gameplay shake, including event, Lua and stage-scripted ones. Stage scripts cannot bypass it.
 - **Text size** scales the sprite-font text used by menus and dialogue. Default is `1.0`.
-- **Automatic offset calibration** is available in **Options → Note/Beat Delay**: press **C** (keyboard) or **Y** (gamepad), then tap along with the beat 8 times using the note keys. The measured offset is applied and saved. Manual adjustment still works as before.
+- **Offset calibration** lives in **Options → Note/Beat Delay** and uses the main-menu backdrop: a centered receptor with gameplay-style arrows rising toward it. Press **Accept** to switch between **Combo Offset**, **Audio Offset** and **Video Offset**. In either offset tab, press **C** (keyboard) or **Y** (gamepad) to run both passes: tap 8 times to the drum beat (audio latency → `noteOffset`), then 8 times when an arrow reaches the receptor (display latency → `videoOffset`). Both values are applied and saved; the video offset shifts only how notes are drawn, never their hit timing. Manual left/right adjustment, hold-to-scan, reset and combo dragging still work as before.
 
 ### File Access sandbox
 
