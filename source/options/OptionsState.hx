@@ -7,6 +7,7 @@ import states.MainMenuState;
 class OptionsState extends MusicBeatState
 {
 	var options:Array<String> = [
+		'Cheetah Engine Options',
 		'Note Colors',
 		'Controls',
 		'Adjust Delay and Combo',
@@ -31,6 +32,8 @@ class OptionsState extends MusicBeatState
 	function openSelectedSubstate(label:String) {
 		switch(label)
 		{
+			case 'Cheetah Engine Options':
+				openSubState(new options.CheetahOptionsSubState());
 			case 'Note Colors':
 				openSubState(new options.NotesColorSubState());
 			case 'Controls':

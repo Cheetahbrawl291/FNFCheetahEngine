@@ -31,6 +31,11 @@ import states.TitleState;
 	public var fileAccessAudio:Bool = true;
 	public var fileAccessOther:Bool = true;
 
+	// Cheetah Engine Options. Defaults preserve the pre-menu behavior.
+	public var cheetahResetMainMenu:Bool = false; // momentary action flag for the reset prompt
+	public var winApiEvents:Bool = true; // master gate for all Windows API chart events
+	public var erectMixUnification:Bool = true; // merge erect remixes into base songs in Freeplay
+
 	// Windows API song events. All OS-level interactions start disabled.
 	public var winApiTaskbar:Bool = false;
 	public var winApiWallpaper:Bool = false;
