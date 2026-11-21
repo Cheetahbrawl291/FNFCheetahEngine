@@ -18,6 +18,14 @@ There you can learn how to use the 212 PlayState functions in your mod.
 
 ## What Cheetah Engine adds
 
+### Cheetah Engine Options
+
+Found in **Options → Cheetah Engine Options**:
+
+- **Reset Custom Main Menu** deletes the saved `mainmenu.json` and `menu_custom.json` for the current mod and the global mods folder, restoring the stock menu. It asks for confirmation first and is safe to repeat when no custom menu exists.
+- **Windows API Events** is a master switch for every chart event that calls the Windows API, including the cosmetic ones that are otherwise always allowed. Exit cleanup still runs so the desktop is never left altered. On by default; non-Windows builds show it as unavailable.
+- **Erect Mix Unification** merges erect remixes into their base song as Erect/Nightmare difficulties in Freeplay (on by default). Off shows them as ordinary standalone songs instead of hiding them.
+
 ### Accessibility
 
 Found in **Options → Accessibility**:
@@ -62,7 +70,7 @@ The original weeks and songs are restored in debug builds, including their weeks
 
 ### Windows API song events
 
-Windows builds can drive the OS window and desktop from chart events. The Chart Editor lists every event with its value formats; the gates live in **Options → Windows API**:
+Windows builds can drive the OS window and desktop from chart events. The Chart Editor lists every event with its value formats; the gates live in **Options → Windows API**, with an additional master switch in **Options → Cheetah Engine Options** that refuses every Windows API event at once:
 
 - Always available: window border and title-bar text color, dark mode, corner style, opacity and centering.
 - Disabled by default, one switch each: hiding the taskbar or desktop icons, changing the wallpaper, screen captures and GDI effects. A chart cannot use any of them until you enable the matching switch.
