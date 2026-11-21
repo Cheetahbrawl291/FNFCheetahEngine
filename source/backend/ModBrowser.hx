@@ -24,6 +24,7 @@ typedef ModTaskSnapshot = {
 	var total:Int;
 	var page:Int;
 	var installedFolder:String;
+	var notice:Null<String>;
 }
 
 /**
@@ -90,7 +91,10 @@ class ModBrowser
 		try
 		{
 			task.setStage('Reading mod info...', 0);
-			var json:Dynamic = parseJson(httpGet(API_URL + '/Mod/' + modId + '/ProfilePage'));
+			task.setNotice(null);
+			var profileBytes:Bytes = httpGet(API_URL + '/Mod/' + modId + '/ProfilePage');
+			var profileText:String = profileBytes.toString();
+			var json:Dynamic = parseJson(profileBytes);
 
 			var files:Array<Dynamic> = json._aFiles;
 			var chosen:Dynamic = null;
@@ -105,7 +109,13 @@ class ModBrowser
 					break;
 				}
 			}
-			if(chosen == null) throw 'This mod has no .zip file. Only .zip mods can be installed automatically.';
+			if(chosen == null)
+			{
+				var host:Null<String> = ModArchiveInspector.externalHostFromText(profileText);
+				if(host != null)
+					throw 'This mod is hosted on $host and cannot be installed automatically. Download the .zip and install it manually into mods/.';
+				throw 'This mod has no .zip file. Download it and install it manually into mods/.';
+			}
 
 			var fileName:String = Std.string(chosen._sFile);
 			var fileSize:Int = chosen._nFilesize != null ? Std.int(chosen._nFilesize) : 0;
@@ -117,7 +127,9 @@ class ModBrowser
 
 			task.setStage('Extracting...', 0);
 			var apiName:String = json._sName != null ? Std.string(json._sName) : fallbackName;
-			var folder:String = extractZip(data, apiName, function(progress:Float) task.setStage('Extracting...', progress));
+			var folder:String = extractZip(data, apiName,
+				function(progress:Float) task.setStage('Extracting...', progress),
+				function(notice:String) task.setNotice(notice));
 
 			task.setInstalled(folder);
 			task.finish();
@@ -207,10 +219,9 @@ class ModBrowser
 
 	// ----------------------------------------------------------- zip install
 
-	public static function extractZip(bytes:Bytes, preferredName:String, ?onProgress:Float->Void):String
+	public static function extractZip(bytes:Bytes, preferredName:String, ?onProgress:Float->Void, ?onNotice:String->Void):String
 	{
 		var files:Array<{entry:haxe.zip.Entry, path:String}> = [];
-		var root:String = '';
 
 		var entries = null;
 		try
@@ -252,7 +263,31 @@ class ModBrowser
 
 		var paths:Array<String> = [];
 		for(file in files) paths.push(file.path);
-		root = findRoot(paths);
+
+		var rootCandidate:Null<String> = ModArchiveInspector.findModRoot(paths);
+		if(rootCandidate == null)
+			throw 'This archive does not contain a Psych Engine mod. Download it and install it manually into mods/.';
+		var root:String = rootCandidate;
+
+		var packPath:String = root + 'pack.json';
+		var declaredVersion:Null<String> = null;
+		for(file in files)
+		{
+			if(file.path.toLowerCase() != packPath.toLowerCase()) continue;
+			declaredVersion = ModArchiveInspector.versionFromPack(file.entry.data.toString());
+			break;
+		}
+
+		if(onNotice != null)
+		{
+			var status:String = ModArchiveInspector.compatibility(declaredVersion);
+			if(status == ModArchiveInspector.INCOMPATIBLE)
+				onNotice('Psych version warning: mod declares ' + declaredVersion + ', but this engine is based on Psych ' + ModArchiveInspector.BASE_PSYCH_VERSION + '. It may not work correctly.');
+			else if(status == ModArchiveInspector.COMPATIBLE)
+				onNotice('Psych version: ' + declaredVersion + ' (compatible with base ' + ModArchiveInspector.BASE_PSYCH_VERSION + ').');
+			else
+				onNotice('Psych version: not declared by the mod; compatibility unknown (engine base ' + ModArchiveInspector.BASE_PSYCH_VERSION + ').');
+		}
 
 		var folderName:String = root.length > 0 ? root.substr(0, root.length - 1) : preferredName;
 		var slash:Int = folderName.lastIndexOf('/');
@@ -312,44 +347,6 @@ class ModBrowser
 			else FileSystem.deleteFile(child);
 		}
 		FileSystem.deleteDirectory(path);
-	}
-
-	/**
-	 * Decides which folder inside the archive is the mod itself.
-	 * Returns a prefix ending with '/' ('' when the archive root is the mod).
-	 */
-	static function findRoot(paths:Array<String>):String
-	{
-		var packFiles:Array<String> = [];
-		for(path in paths)
-			if(path == 'pack.json' || path.endsWith('/pack.json')) packFiles.push(path);
-
-		if(packFiles.length > 0)
-		{
-			packFiles.sort(function(a, b) return segmentCount(a) - segmentCount(b));
-			var pack:String = packFiles[0];
-			var slash:Int = pack.lastIndexOf('/');
-			return slash < 0 ? '' : pack.substr(0, slash + 1);
-		}
-
-		var top:String = null;
-		for(path in paths)
-		{
-			var slash:Int = path.indexOf('/');
-			if(slash < 0) return ''; // file at archive root
-			var current:String = path.substr(0, slash);
-			if(top == null) top = current;
-			else if(top != current) return '';
-		}
-		return top == null ? '' : top + '/';
-	}
-
-	static function segmentCount(path:String):Int
-	{
-		var count:Int = 1;
-		for(i in 0...path.length)
-			if(path.charAt(i) == '/') count++;
-		return count;
 	}
 
 	static function isJunk(path:String):Bool
@@ -443,6 +440,7 @@ class ModTask
 	var _total:Int = 0;
 	var _page:Int = 1;
 	var _installedFolder:String = null;
+	var _notice:Null<String> = null;
 
 	public function new() {}
 
@@ -467,6 +465,13 @@ class ModTask
 	{
 		mutex.acquire();
 		_installedFolder = folder;
+		mutex.release();
+	}
+
+	public function setNotice(notice:Null<String>):Void
+	{
+		mutex.acquire();
+		_notice = notice;
 		mutex.release();
 	}
 
@@ -496,7 +501,8 @@ class ModTask
 			entries: _entries,
 			total: _total,
 			page: _page,
-			installedFolder: _installedFolder
+			installedFolder: _installedFolder,
+			notice: _notice
 		};
 		mutex.release();
 		return snap;

@@ -46,6 +46,8 @@ Selecting a mod downloads the first non-archived `.zip` from its profile page an
 
 Downloads are capped at 400 MB because the archive is held in memory. Before the first install of a session, an in-state warning reminds you that mods are third-party code that can run Lua/HScript and to install only trusted mods.
 
+The installer finds the real mod folder inside nested wrapper archives, so the installed folder contains the mod instead of the wrapper. Archives with no Psych mod content are rejected. When a GameBanana entry points to an external host such as Google Drive instead of a `.zip` download, the browser tells you to download and install the mod manually into `mods/`. If the mod's `pack.json` declares a Psych Engine version, the result screen reports compatibility with this engine's Psych 1.0.4 base; a mismatch is a warning and the mod still installs.
+
 ### Editors
 
 - The Menu Customization Hub is trimmed down to the Main Menu editor.

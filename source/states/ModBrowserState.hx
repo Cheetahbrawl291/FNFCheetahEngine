@@ -279,7 +279,9 @@ class ModBrowserState extends MusicBeatState
 					lastInstalled = snap.installedFolder;
 					@:privateAccess Mods.updateModList();
 					Mods.parseList();
-					setStatus('Installed to mods/' + lastInstalled + '.\nRestart the game to load it.', 0xFF66FF66);
+					var notice:String = (snap.notice != null && snap.notice.length > 0) ? '\n' + snap.notice : '';
+					var noticeColor:FlxColor = notice.toLowerCase().indexOf('warning') >= 0 ? FlxColor.YELLOW : 0xFF66FF66;
+					setStatus('Installed to mods/' + lastInstalled + '.\nRestart the game to load it.' + notice, noticeColor);
 				}
 				refreshButtons();
 			}
