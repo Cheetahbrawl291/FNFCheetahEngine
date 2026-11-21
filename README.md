@@ -25,6 +25,7 @@ Found in **Options → Accessibility**:
 - **Colorblind-safe palettes** for lane colors, applied to arrows, strums and note splashes. `Off` keeps the original behavior and your custom Note Colors.
 - **Reduced camera shake** damps every gameplay shake, including event, Lua and stage-scripted ones. Stage scripts cannot bypass it.
 - **Text size** scales the sprite-font text used by menus and dialogue. Default is `1.0`.
+- **Automatic offset calibration** is available in **Options → Note/Beat Delay**: press **C** (keyboard) or **Y** (gamepad), then tap along with the beat 8 times using the note keys. The measured offset is applied and saved. Manual adjustment still works as before.
 
 ### File Access sandbox
 

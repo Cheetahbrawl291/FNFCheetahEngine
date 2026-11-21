@@ -1,9 +1,11 @@
 package options;
 
+import backend.OffsetCalibrator;
 import backend.StageData;
 import objects.Character;
 import objects.Bar;
 import flixel.addons.display.shapes.FlxShapeCircle;
+import flixel.input.gamepad.FlxGamepadInputID;
 
 import states.stages.StageWeek1 as BackgroundStage;
 
@@ -31,6 +33,9 @@ class NoteOffsetState extends MusicBeatState
 	var beatTween:FlxTween;
 
 	var changeModeText:FlxText;
+	var autoStatusText:FlxText;
+	var autoCalibrating:Bool = false;
+	var autoTaps:Array<Float> = [];
 
 	var controllerPointer:FlxSprite;
 	var _lastControllerMode:Bool = false;
@@ -156,7 +161,15 @@ class NoteOffsetState extends MusicBeatState
 		changeModeText.scrollFactor.set();
 		changeModeText.cameras = [camHUD];
 		add(changeModeText);
-		
+
+		autoStatusText = new FlxText(0, timeTxt.y + 44, FlxG.width, "", 20);
+		autoStatusText.setFormat(Paths.font("vcr.ttf"), 20, FlxColor.WHITE, CENTER, FlxTextBorderStyle.OUTLINE, FlxColor.BLACK);
+		autoStatusText.scrollFactor.set();
+		autoStatusText.borderSize = 2;
+		autoStatusText.visible = false;
+		autoStatusText.cameras = [camHUD];
+		add(autoStatusText);
+
 		controllerPointer = new FlxShapeCircle(0, 0, 20, {thickness: 0}, FlxColor.WHITE);
 		controllerPointer.offset.set(20, 20);
 		controllerPointer.screenCenter();
@@ -210,6 +223,12 @@ class NoteOffsetState extends MusicBeatState
 			updateMode();
 			_lastControllerMode = controls.controllerMode;
 		}
+
+		if(!onComboMenu && !autoCalibrating && (FlxG.keys.justPressed.C || FlxG.gamepads.anyJustPressed(FlxGamepadInputID.Y)))
+			startAutoCalibration();
+
+		if(autoCalibrating)
+			collectAutoTap();
 
 		if(onComboMenu)
 		{
@@ -355,7 +374,7 @@ class NoteOffsetState extends MusicBeatState
 				repositionCombo();
 			}
 		}
-		else
+		else if(!autoCalibrating)
 		{
 			if(controls.UI_LEFT_P)
 			{
@@ -392,8 +411,8 @@ class NoteOffsetState extends MusicBeatState
 			}
 		}
 
-		if((!controls.controllerMode && controls.ACCEPT) ||
-		(controls.controllerMode && FlxG.gamepads.anyJustPressed(START)))
+		if(!autoCalibrating && ((!controls.controllerMode && controls.ACCEPT) ||
+		(controls.controllerMode && FlxG.gamepads.anyJustPressed(START))))
 		{
 			onComboMenu = !onComboMenu;
 			updateMode();
@@ -522,6 +541,9 @@ class NoteOffsetState extends MusicBeatState
 		timeBar.visible = !onComboMenu;
 		timeTxt.visible = !onComboMenu;
 		beatText.visible = !onComboMenu;
+		autoStatusText.visible = !onComboMenu;
+		if(!onComboMenu && !autoCalibrating)
+			autoStatusText.text = Language.getPhrase('auto_offset_hint', 'Press C / Y to auto-calibrate, then tap to the beat (8 taps).');
 
 		controllerPointer.visible = false;
 		FlxG.mouse.visible = false;
@@ -544,5 +566,44 @@ class NoteOffsetState extends MusicBeatState
 			str2 = Language.getPhrase('switch_on_start', '(Press Start to Switch)');
 
 		changeModeText.text = '< ${str.toUpperCase()} ${str2.toUpperCase()} >';
+	}
+
+	function startAutoCalibration():Void
+	{
+		autoCalibrating = true;
+		autoTaps = [];
+		autoStatusText.text = Language.getPhrase('auto_offset_tapping', 'Auto calibration: tap with the 4 note keys (8 taps).');
+	}
+
+	function collectAutoTap():Void
+	{
+		var tapped:Bool = FlxG.keys.justPressed.LEFT || FlxG.keys.justPressed.RIGHT || FlxG.keys.justPressed.UP || FlxG.keys.justPressed.DOWN ||
+			FlxG.keys.justPressed.A || FlxG.keys.justPressed.D || FlxG.keys.justPressed.W || FlxG.keys.justPressed.S ||
+			FlxG.gamepads.anyJustPressed(FlxGamepadInputID.A) || FlxG.gamepads.anyJustPressed(FlxGamepadInputID.B) ||
+			FlxG.gamepads.anyJustPressed(FlxGamepadInputID.X) || FlxG.gamepads.anyJustPressed(FlxGamepadInputID.Y) ||
+			FlxG.gamepads.anyJustPressed(FlxGamepadInputID.DPAD_LEFT) || FlxG.gamepads.anyJustPressed(FlxGamepadInputID.DPAD_RIGHT) ||
+			FlxG.gamepads.anyJustPressed(FlxGamepadInputID.DPAD_UP) || FlxG.gamepads.anyJustPressed(FlxGamepadInputID.DPAD_DOWN);
+		if(!tapped) return;
+
+		autoTaps.push(FlxG.sound.music != null ? FlxG.sound.music.time : Conductor.songPosition);
+		if(autoTaps.length < 8)
+		{
+			autoStatusText.text = 'Auto calibration: ${autoTaps.length}/8 taps';
+			return;
+		}
+
+		var result:Null<Int> = OffsetCalibrator.suggestOffset(autoTaps, Conductor.crochet);
+		autoCalibrating = false;
+		autoTaps = [];
+		if(result == null)
+		{
+			autoStatusText.text = Language.getPhrase('auto_offset_failed', 'Auto calibration failed. Try again.');
+			return;
+		}
+
+		barPercent = result;
+		updateNoteDelay();
+		ClientPrefs.saveSettings();
+		autoStatusText.text = Language.getPhrase('auto_offset_done', 'Auto offset: {1} ms (applied). Press C / Y to retry.', [result]);
 	}
 }
