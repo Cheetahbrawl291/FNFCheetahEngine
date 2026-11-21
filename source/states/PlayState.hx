@@ -2317,29 +2317,32 @@ class PlayState extends MusicBeatState
 			#end
 
 			#if windows
-			case 'Window Border Color':
+			// Cheetah Options master gate: one switch refuses every Windows API
+			// chart event, the desktop-touching ones and the cosmetic ones alike.
+			// Exit cleanup in WindowsIntegrations stays active regardless.
+			case 'Window Border Color' if(ClientPrefs.data.winApiEvents):
 				WindowsIntegrations.setBorderColor(value1);
-			case 'Window Text Color':
+			case 'Window Text Color' if(ClientPrefs.data.winApiEvents):
 				WindowsIntegrations.setTextColor(value1);
-			case 'Window Dark Mode':
+			case 'Window Dark Mode' if(ClientPrefs.data.winApiEvents):
 				WindowsIntegrations.setDarkMode(value1);
-			case 'Window Corner':
+			case 'Window Corner' if(ClientPrefs.data.winApiEvents):
 				WindowsIntegrations.setCorner(value1);
-			case 'Window Opacity':
+			case 'Window Opacity' if(ClientPrefs.data.winApiEvents):
 				WindowsIntegrations.setOpacity(value1);
-			case 'Center Window':
+			case 'Center Window' if(ClientPrefs.data.winApiEvents):
 				WindowsIntegrations.centerWindow();
-			case 'Hide Taskbar':
+			case 'Hide Taskbar' if(ClientPrefs.data.winApiEvents):
 				WindowsIntegrations.hideTaskbar(value1);
-			case 'Hide Desktop Icons':
+			case 'Hide Desktop Icons' if(ClientPrefs.data.winApiEvents):
 				WindowsIntegrations.hideDesktopIcons(value1);
-			case 'Move Desktop Icons':
+			case 'Move Desktop Icons' if(ClientPrefs.data.winApiEvents):
 				WindowsIntegrations.moveDesktop(value1, value2);
-			case 'Change Wallpaper':
+			case 'Change Wallpaper' if(ClientPrefs.data.winApiEvents):
 				WindowsIntegrations.changeWallpaper(value1);
-			case 'Screen Capture':
+			case 'Screen Capture' if(ClientPrefs.data.winApiEvents):
 				WindowsIntegrations.screenCapture(value1);
-			case 'GDI Effect':
+			case 'GDI Effect' if(ClientPrefs.data.winApiEvents):
 				WindowsIntegrations.gdiEffect(value1, value2);
 			#end
 		}
