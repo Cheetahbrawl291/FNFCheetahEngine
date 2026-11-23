@@ -57,10 +57,14 @@ class PsychUIRadioGroup extends FlxSpriteGroup
 		_hitbox.y = y;
 		_hitbox.width = width;
 		_hitbox.height = height;
-		if(maxItems > 0 && maxItems < labels.length && FlxG.mouse.wheel != 0 && FlxG.mouse.overlaps(_hitbox, camera))
+		if(maxItems > 0 && maxItems < labels.length && FlxG.mouse.overlaps(_hitbox, camera))
 		{
-			curScroll -= FlxG.mouse.wheel;
-			//trace('just scrolled: ' + FlxG.mouse.wheel);
+			backend.CursorManager.markScrollable();
+			if(FlxG.mouse.wheel != 0)
+			{
+				curScroll -= FlxG.mouse.wheel;
+				//trace('just scrolled: ' + FlxG.mouse.wheel);
+			}
 		}
 
 		var baseY:Float = y + radios.length * space;

@@ -8,6 +8,17 @@ import flxanimate.FlxAnimate as OriginalFlxAnimate;
 
 class PsychFlxAnimate extends OriginalFlxAnimate
 {
+	static function readText(path:String):String
+	{
+		#if sys
+		return File.getContent(path);
+		#else
+		return openfl.utils.Assets.exists(path, openfl.utils.AssetType.TEXT)
+			? openfl.utils.Assets.getText(path)
+			: path;
+		#end
+	}
+
 	public function loadAtlasEx(img:FlxGraphicAsset, pathOrStr:String = null, myJson:Dynamic = null)
 	{
 		var animJson:AnimAtlas = null;
@@ -16,7 +27,7 @@ class PsychFlxAnimate extends OriginalFlxAnimate
 			var trimmed:String = pathOrStr.trim();
 			trimmed = trimmed.substr(trimmed.length - 5).toLowerCase();
 
-			if(trimmed == '.json') myJson = File.getContent(myJson); //is a path
+			if(trimmed == '.json') myJson = readText(myJson); //is a path
 			animJson = cast haxe.Json.parse(_removeBOM(myJson));
 		}
 		else animJson = cast myJson;
@@ -29,12 +40,12 @@ class PsychFlxAnimate extends OriginalFlxAnimate
 
 		if(trimmed == '.json') //Path is json
 		{
-			myData = File.getContent(pathOrStr);
+			myData = readText(pathOrStr);
 			isXml = false;
 		}
 		else if (trimmed.substr(1) == '.xml') //Path is xml
 		{
-			myData = File.getContent(pathOrStr);
+			myData = readText(pathOrStr);
 			isXml = true;
 		}
 		myData = _removeBOM(myData);

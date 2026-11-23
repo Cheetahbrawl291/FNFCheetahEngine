@@ -121,6 +121,10 @@ class LuaUtils
 	public static function getModSetting(saveTag:String, ?modName:String = null)
 	{
 		#if MODS_ALLOWED
+		// Native (non-mod) scripts have no mod name, so there are no mod settings
+		// to read. Bail out quietly instead of warning about mods//data/settings.json.
+		if (modName == null || modName.length < 1) return null;
+
 		if(FlxG.save.data.modSettings == null) FlxG.save.data.modSettings = new Map<String, Dynamic>();
 
 		var settings:Map<String, Dynamic> = FlxG.save.data.modSettings.get(modName);

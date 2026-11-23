@@ -36,7 +36,7 @@ class ErrorHandledShader extends FlxShader implements IErrorHandler
 
 		trace(error);
 
-		#if !debug
+		#if (sys && !debug)
 		// Save a crash log on Release builds
 		var errMsg:String = "";
 		var dateNow:String = Date.now().toString().replace(" ", "_").replace(":", "'");
@@ -47,6 +47,8 @@ class ErrorHandledShader extends FlxShader implements IErrorHandler
 		var crashLogPath:String = './crash/shader_${shaderName}_${dateNow}.txt';
 		File.saveContent(crashLogPath, error);
 		Application.current.window.alert('Error log saved at: $crashLogPath', alertTitle);
+		#elseif !debug
+		Application.current.window.alert('Web builds do not write crash logs, check the console instead.', alertTitle);
 		#else
 		Application.current.window.alert('Error logs aren\'t created on debug builds, check the trace log instead.', alertTitle);
 		#end

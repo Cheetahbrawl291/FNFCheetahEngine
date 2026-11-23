@@ -74,7 +74,7 @@ class StoryMenuState extends MusicBeatState
 			FlxTransitionableState.skipNextTransIn = true;
 			persistentUpdate = false;
 			MusicBeatState.switchState(new states.ErrorState("NO WEEKS ADDED FOR STORY MODE\n\nPress ACCEPT to go to the Week Editor Menu.\nPress BACK to return to Main Menu.",
-				function() MusicBeatState.switchState(new states.editors.WeekEditorState()),
+				function() MusicBeatState.switchState(#if desktop new states.editors.WeekEditorState() #else new states.MainMenuState() #end),
 				function() MusicBeatState.switchState(new states.MainMenuState())));
 			return;
 		}
@@ -307,6 +307,11 @@ class StoryMenuState extends MusicBeatState
 
 		for (num => lock in grpLocks.members)
 			lock.y = grpWeekText.members[lock.ID].y + grpWeekText.members[lock.ID].height/2 - lock.height/2;
+
+		// Cheetah Engine: blocked cursor over a locked week.
+		for (lock in grpLocks.members)
+			if(lock.visible && FlxG.mouse.overlaps(lock))
+				backend.CursorManager.setBlockedHover(true);
 	}
 
 	var movedBack:Bool = false;

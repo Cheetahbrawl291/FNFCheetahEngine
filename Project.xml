@@ -24,7 +24,7 @@
 	<define name="HSCRIPT_ALLOWED" if="desktop" />
 	<define name="LUA_ALLOWED" if="desktop" />
 	<define name="ACHIEVEMENTS_ALLOWED" />
-	<define name="DISCORD_ALLOWED" />
+	<define name="DISCORD_ALLOWED" if="desktop" />
 	<define name="TRANSLATIONS_ALLOWED" />
 	<define name="BASE_GAME_FILES" /> <!-- Base game weeks, songs and assets. Also enables their achievements -->
 	<define name="IRIS_DEBUG"/>
@@ -115,6 +115,7 @@
 
 	<!-- _______________________________ Libraries ______________________________ -->
 
+	<haxelib name="format"/>
 	<haxelib name="flixel" version="5.6.1"/>
 	<haxelib name="flixel-addons" version="3.2.2"/>
 	<haxelib name="tjson" version="1.4.0"/>

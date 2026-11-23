@@ -1,7 +1,9 @@
 package states;
 
 import lime.app.Future;
+#if cpp
 import sys.thread.FixedThreadPool;
+#end
 import haxe.Json;
 import lime.utils.Assets;
 import openfl.display.BitmapData;
@@ -17,8 +19,10 @@ import backend.Song;
 import backend.StageData;
 import objects.Character;
 
+#if cpp
 import sys.thread.Thread;
 import sys.thread.Mutex;
+#end
 
 import objects.Note;
 import objects.NoteSplash;
@@ -43,8 +47,13 @@ class LoadingState extends MusicBeatState
 
 	static var originalBitmapKeys:Map<String, String> = [];
 	static var requestedBitmaps:Map<String, BitmapData> = [];
+	#if cpp
 	static var mutex:Mutex;
 	static var threadPool:FixedThreadPool = null;
+	#else
+	static var mutex:SyncMutex;
+	static var threadPool:SyncThreadPool = null;
+	#end
 
 	function new(target:FlxState, stopMusic:Bool)
 	{
@@ -390,7 +399,12 @@ class LoadingState extends MusicBeatState
 				_loaded();
 				break;
 			}
-			else Sys.sleep(0.001);
+			else
+			{
+				#if sys
+				Sys.sleep(0.001);
+				#end
+			}
 		}
 		return target;
 	}
@@ -410,13 +424,17 @@ class LoadingState extends MusicBeatState
 	static var dontPreloadDefaultVoices:Bool = false;
 	static function _startPool()
 	{
-		#if MULTITHREADED_LOADING
+		#if (MULTITHREADED_LOADING && cpp)
 		// Due to the Main thread and Discord thread, we decrease it by 2.
 		var threadCount:Int = Std.int(Math.max(1, getCPUThreadsCount() - #if DISCORD_ALLOWED 2 #else 1 #end));
 		#else
 		var threadCount:Int = 1;
 		#end
+		#if cpp
 		threadPool = new FixedThreadPool(threadCount);
+		#else
+		threadPool = new SyncThreadPool(threadCount);
+		#end
 	}
 
 	public static function prepareToSong()
@@ -620,6 +638,7 @@ class LoadingState extends MusicBeatState
 		for (folder in arr.copy())
 		{
 			var nam:String = folder.trim();
+			#if sys
 			if(nam.endsWith('/'))
 			{
 				for (subfolder in Mods.directoriesWithFile(Paths.getSharedPath(), '$prefix/$nam'))
@@ -636,6 +655,7 @@ class LoadingState extends MusicBeatState
 
 				//trace('Folder detected! ' + folder);
 			}
+			#end
 		}
 
 		var i:Int = 0;
@@ -659,7 +679,11 @@ class LoadingState extends MusicBeatState
 
 	public static function startThreads()
 	{
+		#if cpp
 		mutex = new Mutex();
+		#else
+		mutex = new SyncMutex();
+		#end
 		loadMax = imagesToPrepare.length + soundsToPrepare.length + musicToPrepare.length + songsToPrepare.length;
 		loaded = 0;
 
@@ -843,3 +867,25 @@ class LoadingState extends MusicBeatState
     	}
     	#end
 }
+
+#if !cpp
+// HTML5 has no worker threads. Run preload jobs inline so the same code path works.
+private class SyncThreadPool
+{
+	public function new(count:Int) {}
+
+	public function run(job:Void->Void):Void
+	{
+		job();
+	}
+
+	public function shutdown():Void {}
+}
+
+private class SyncMutex
+{
+	public function new() {}
+	public function acquire():Void {}
+	public function release():Void {}
+}
+#end

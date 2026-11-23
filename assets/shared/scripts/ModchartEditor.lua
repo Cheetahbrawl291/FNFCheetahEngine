@@ -720,7 +720,6 @@ function onCreate()
 		end
 
 		if not editor_memory.showedTooltip then 
-			addTextToDebug('Modchart Editor: Press '..(editor_onMobile and 'BLUE SQUARE' or '5')..' to open', 'FFFF00')
 			editor_memory.showedTooltip = true
 			flushMemory()
 		end

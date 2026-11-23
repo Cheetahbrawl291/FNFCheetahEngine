@@ -35,6 +35,7 @@ import states.TitleState;
 	public var cheetahResetMainMenu:Bool = false; // momentary action flag for the reset prompt
 	public var winApiEvents:Bool = true; // master gate for all Windows API chart events
 	public var erectMixUnification:Bool = true; // merge erect remixes into base songs in Freeplay
+	public var picoVocalMode:Bool = false; // TAB in Freeplay: false = BF vocals, true = Pico mix
 
 	// Windows API song events. All OS-level interactions start disabled.
 	public var winApiTaskbar:Bool = false;

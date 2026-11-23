@@ -200,6 +200,9 @@ class HScript extends Iris
 		#if flxanimate
 		set('FlxAnimate', FlxAnimate);
 		#end
+		// Keep the local SpectralAnalyzer in the binary so HScript's
+		// `import funkin.vis.dsp.SpectralAnalyzer;` resolves via Type.resolveClass.
+		set('SpectralAnalyzer', funkin.vis.dsp.SpectralAnalyzer);
 
 		// Functions & Variables
 		set('setVar', function(name:String, value:Dynamic) {

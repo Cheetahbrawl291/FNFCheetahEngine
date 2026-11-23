@@ -397,6 +397,7 @@ class ModsMenuState extends MusicBeatState
 
 				if(hoveringOnMods)
 				{
+					backend.CursorManager.markScrollable();
 					var shiftMult:Int = (FlxG.keys.pressed.SHIFT || FlxG.gamepads.anyPressed(LEFT_SHOULDER) || FlxG.gamepads.anyPressed(RIGHT_SHOULDER)) ? 4 : 1;
 					if(controls.UI_DOWN_P)
 						changeSelectedMod(shiftMult);

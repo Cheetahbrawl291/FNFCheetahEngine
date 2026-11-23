@@ -22,6 +22,7 @@ class LanguageSubState extends MusicBeatSubstate
 
 		languages.push(ClientPrefs.defaultData.language); //English (US)
 		displayLanguages.set(ClientPrefs.defaultData.language, Language.defaultLangName);
+		#if sys
 		var directories:Array<String> = Mods.directoriesWithFile(Paths.getSharedPath(), 'data/');
 		for (directory in directories)
 		{
@@ -53,6 +54,7 @@ class LanguageSubState extends MusicBeatSubstate
 				}
 			}
 		}
+		#end
 
 		languages.sort(function(a:String, b:String)
 		{

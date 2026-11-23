@@ -1,8 +1,10 @@
 package options;
 
+#if desktop
 import backend.MenuReset;
-import backend.Mods;
 import states.editors.content.Prompt;
+#end
+import backend.Mods;
 
 /**
  * Engine-specific conveniences that do not belong in the generic Psych menus:
@@ -17,12 +19,14 @@ class CheetahOptionsSubState extends BaseOptionsMenu
 		rpcTitle = 'Cheetah Engine Options';
 
 		// Destructive action, so it confirms before touching any file.
+		#if desktop
 		var resetOption:Option = new Option('Reset Custom Main Menu',
 			'Delete the saved mainmenu.json and menu_custom.json files\nfor this mod and for the global mods folder. The stock menu returns.',
 			'cheetahResetMainMenu',
 			BOOL);
 		resetOption.onChange = confirmResetMainMenu;
 		addOption(resetOption);
+		#end
 
 		var winOption:Option = new Option('Windows API Events',
 			'Master switch for chart events that use the Windows API.\nOff refuses every Windows API event, including cosmetic ones.\nDesktop cleanup on exit still runs.',
@@ -42,6 +46,7 @@ class CheetahOptionsSubState extends BaseOptionsMenu
 		super();
 	}
 
+	#if desktop
 	function confirmResetMainMenu():Void
 	{
 		// The option is a momentary action: restore its checkbox immediately.
@@ -64,4 +69,5 @@ class CheetahOptionsSubState extends BaseOptionsMenu
 			: 0;
 		trace('Cheetah Options: removed ${removed + globalRemoved} custom main menu config file(s)');
 	}
+	#end
 }

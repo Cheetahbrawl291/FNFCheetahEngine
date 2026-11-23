@@ -26,6 +26,30 @@ Found in **Options → Cheetah Engine Options**:
 - **Windows API Events** is a master switch for every chart event that calls the Windows API, including the cosmetic ones that are otherwise always allowed. Exit cleanup still runs so the desktop is never left altered. On by default; non-Windows builds show it as unavailable.
 - **Erect Mix Unification** merges erect remixes into their base song as Erect/Nightmare difficulties in Freeplay (on by default). Off shows them as ordinary standalone songs instead of hiding them.
 
+### Mixes Editor
+
+Press **7** on the main menu and choose **Mixes Editor** to mark songs as `normal` or `erect` and pair them. Select a song, press `1` or `2` to set its type, then `ENTER` and pick its partner. `0` clears a song, `DEL` removes a pair, `S` saves, `BACK` saves and exits. Pairs are stored per mod in `mods/<mod>/data/mixes.json` and take priority over the `-erect` name convention in Freeplay when Erect Mix Unification is enabled. `pico` is also a valid explicit mark; Weekend 1 songs default to it because Pico sings them in the base game.
+
+### Pico vocals in Freeplay
+
+Press **TAB** in Freeplay to open the **character selector**, a separate screen where **LEFT/RIGHT** or **TAB** pick BF or Pico, **ENTER** confirms and **ESC** cancels. A small indicator at the top-left of Freeplay shows the chosen character and the vocals actually in use.
+
+Selector art is optional and lives under `assets/shared/images/CharSelect/`: `bg/` (base, stage, animated `crowd/`, curtains), `titles/` (`boyfriend.png`, `Pico.png`, `placeholder.png`) and `char/<Name>/` (FlxAnimate `Animation.json` + `spritemap1.*` with `<id> cs idle/confirm/deselect` symbols). Missing files fall back to the plain text UI, so art can be added gradually. When a `(Pico Mix)` chart is installed for the selected song and difficulty, the toggle loads that chart for both the preview and gameplay and gives it its own score bucket; otherwise the base chart is used. Weekend 1 songs (Darnell, Lit Up, 2Hot, Blazin) are marked as Pico songs by default, so an installed mix is optional for them. The choice is saved as `picoVocalMode` in `ClientPrefs`.
+
+### Cursor
+
+The stock Psych Engine pointer is replaced by a state-driven cursor from `assets/shared/images/cursor`. The cursor stays visible in every state, including gameplay.
+
+- Menus, options, gameplay and a held mouse button: `cursor-default`
+- Chart editor, note under the pointer: `cursor-pointer`
+- Chart editor, moving a note: `cursor-grabbing`
+- Locked item under the pointer: `cursor-cross`
+- Scrollable region: `cursor-scroll`
+- Text field: `cursor-text` (or `cursor-text-vertical` for tall fields)
+- Editor zoom in/out: `cursor-zoom-in` / `cursor-zoom-out`
+- Loading: `cursor-hourglass`
+- Other editors: `cursor-pointer`
+
 ### Accessibility
 
 Found in **Options → Accessibility**:

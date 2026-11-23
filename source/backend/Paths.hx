@@ -500,13 +500,13 @@ class Paths
 		if(spriteJson != null)
 		{
 			changedAtlasJson = true;
-			spriteJson = File.getContent(spriteJson);
+			spriteJson = #if sys File.getContent(spriteJson) #else (OpenFlAssets.exists(spriteJson, TEXT) ? Assets.getText(spriteJson) : spriteJson) #end;
 		}
 
 		if(animationJson != null) 
 		{
 			changedAnimJson = true;
-			animationJson = File.getContent(animationJson);
+			animationJson = #if sys File.getContent(animationJson) #else (OpenFlAssets.exists(animationJson, TEXT) ? Assets.getText(animationJson) : animationJson) #end;
 		}
 
 		// is folder or image path

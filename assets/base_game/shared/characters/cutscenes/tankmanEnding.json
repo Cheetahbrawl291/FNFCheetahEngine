@@ -1,0 +1,23 @@
+{
+	"animations": [
+		{
+			"loop": false,
+			"offsets": [-725, -246],
+			"anim": "anim",
+			"fps": 24,
+			"name": "tankman stress ending",
+			"indices": []
+		}
+	],
+	"vocals_file": "",
+	"no_antialiasing": false,
+	"image": "tankmanBattlefield/cutscenes/tankmanEnding",
+	"position": [0, 188],
+	"healthicon": "tankman",
+	"flip_x": false,
+	"healthbar_colors": [225, 225, 225],
+	"camera_position": [0, 0],
+	"sing_duration": 4,
+	"scale": 1,
+	"_editor_isPlayer": false
+}

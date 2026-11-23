@@ -26,8 +26,10 @@ import cutscenes.DialogueBoxPsych;
 
 import states.StoryMenuState;
 import states.FreeplayState;
+#if desktop
 import states.editors.ChartingState;
 import states.editors.CharacterEditorState;
+#end
 
 import substates.PauseSubState;
 import substates.GameOverSubstate;
@@ -1710,10 +1712,12 @@ class PlayState extends MusicBeatState
 
 		if(!endingSong && !inCutscene && allowDebugKeys)
 		{
+			#if desktop
 			if (controls.justPressed('debug_1'))
 				openChartEditor();
 			else if (controls.justPressed('debug_2'))
 				openCharacterEditor();
+			#end
 		}
 
 		if (healthBar.bounds.max != null && health > healthBar.bounds.max)
@@ -1939,6 +1943,20 @@ class PlayState extends MusicBeatState
 		#end
 	}
 
+	/**
+	 * Pauses an active song when the window loses focus.
+	 * Returns true when the pause menu was opened.
+	 */
+	public function pauseForFocusLoss():Bool
+	{
+		if (!ClientPrefs.data.autoPause) return false;
+		if (paused || !canPause || !startedCountdown || endingSong || inCutscene || health <= 0) return false;
+
+		openPauseMenu();
+		return true;
+	}
+
+	#if desktop
 	function openChartEditor()
 	{
 		canResync = false;
@@ -1979,6 +1997,7 @@ class PlayState extends MusicBeatState
 		#if DISCORD_ALLOWED DiscordClient.resetClientID(); #end
 		MusicBeatState.switchState(new CharacterEditorState(SONG.player2));
 	}
+	#end
 
 	public var isDead:Bool = false; //Don't mess with this on Lua!!!
 	public var gameOverTimer:FlxTimer;
@@ -2490,7 +2509,9 @@ class PlayState extends MusicBeatState
 
 			if (chartingMode)
 			{
+				#if desktop
 				openChartEditor();
+				#end
 				return false;
 			}
 

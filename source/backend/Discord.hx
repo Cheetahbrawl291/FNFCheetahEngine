@@ -266,4 +266,27 @@ private final class DiscordPresence
 		return __presence.endTimestamp = value;
 	}
 }
+#else
+// Discord RPC needs native cpp bindings. Keep the API available on web as a no-op.
+class DiscordClient
+{
+	public static var isInitialized:Bool = false;
+	public static var clientID(default, set):String = "1555626307583213690";
+
+	public static function check() {}
+	public static function prepare() {}
+	public static function shutdown() {}
+	public static function updatePresence() {}
+	public static function changePresence(details:String = 'In the Menus', ?state:String, ?smallImageKey:String, ?hasStartTimestamp:Bool, ?endTimestamp:Float, largeImageKey:String = 'icon') {}
+	inline public static function resetClientID() clientID = "1555626307583213690";
+
+	static function set_clientID(newID:String):String
+	{
+		return clientID = newID;
+	}
+
+	#if MODS_ALLOWED
+	public static function loadModRPC() {}
+	#end
+}
 #end

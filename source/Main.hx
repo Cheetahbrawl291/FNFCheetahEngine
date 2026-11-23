@@ -7,6 +7,7 @@ import android.content.Context;
 import debug.FPSCounter;
 
 import flixel.graphics.FlxGraphic;
+import flixel.FlxG;
 import flixel.FlxGame;
 import flixel.FlxState;
 import haxe.io.Path;
@@ -156,6 +157,16 @@ class Main extends Sprite
 		#if ACHIEVEMENTS_ALLOWED Achievements.load(); #end
 		addChild(new FlxGame(game.width, game.height, game.initialState, game.framerate, game.framerate, game.skipSplash, game.startFullscreen));
 
+		// Focus loss must not freeze the game; during a song it pauses instead.
+		backend.FocusManager.init();
+		#if CRASH_HANDLER
+		backend.CrashReporter.initSignals();
+		#end
+
+		// Cheetah Engine: state-driven cursor. postUpdate runs after each state
+		// update and before the draw, so per-state hide calls cannot win.
+		FlxG.signals.postUpdate.add(backend.CursorManager.update);
+
 		#if !mobile
 		fpsVar = new FPSCounter(10, 3, 0xFFFFFF);
 		addChild(fpsVar);
@@ -224,6 +235,10 @@ class Main extends Sprite
 	#if CRASH_HANDLER
 	function onCrash(e:UncaughtErrorEvent):Void
 	{
+		// Without this OpenFL rethrows the error in C++ and kills the process,
+		// which would defeat a recoverable, non-blocking crash panel.
+		e.preventDefault();
+
 		var errMsg:String = "";
 		var path:String;
 		var callStack:Array<StackItem> = CallStack.exceptionStack(true);
@@ -261,14 +276,7 @@ class Main extends Sprite
 		Sys.println(errMsg);
 		Sys.println("Crash dump saved in " + Path.normalize(path));
 
-		Application.current.window.alert(errMsg, "Error!");
-		#if DISCORD_ALLOWED
-		DiscordClient.shutdown();
-		#end
-		#if windows
-		backend.WindowsIntegrations.restoreAll();
-		#end
-		Sys.exit(1);
+		backend.CrashReporter.report(errMsg);
 	}
 	#end
 }

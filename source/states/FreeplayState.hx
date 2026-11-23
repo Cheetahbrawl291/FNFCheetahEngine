@@ -4,6 +4,8 @@ import backend.WeekData;
 import backend.Highscore;
 import backend.Song;
 import backend.ErectRemix;
+import backend.PicoMix;
+import backend.MixesConfig;
 import backend.MenuCustomization;
 
 import objects.HealthIcon;
@@ -11,6 +13,7 @@ import objects.MusicPlayer;
 
 import options.GameplayChangersSubstate;
 import substates.ResetScoreSubState;
+import substates.VocalistSelectSubState;
 
 import flixel.math.FlxMath;
 import flixel.util.FlxDestroyUtil;
@@ -30,6 +33,7 @@ class FreeplayState extends MusicBeatState
 {
 	var songs:Array<SongMetadata> = [];
 	var erectFolders:Map<String, String> = new Map<String, String>();
+	var linkedErectTargets:Map<String, Bool> = new Map<String, Bool>();
 	var menuLayers:FlxTypedGroup<FlxSprite>;
 	var menuCustom:MenuCustomizationData;
 	var menuCustomCfg:backend.MenuCustomization.MenuConfig;
@@ -63,6 +67,9 @@ class FreeplayState extends MusicBeatState
 	var bottomText:FlxText;
 	var bottomBG:FlxSprite;
 
+	var vocalText:FlxText;
+	var pendingVocalistReload:Bool = false;
+
 	var player:MusicPlayer;
 
 	override function create()
@@ -88,26 +95,56 @@ class FreeplayState extends MusicBeatState
 			FlxTransitionableState.skipNextTransIn = true;
 			persistentUpdate = false;
 			MusicBeatState.switchState(new states.ErrorState("NO WEEKS ADDED FOR FREEPLAY\n\nPress ACCEPT to go to the Week Editor Menu.\nPress BACK to return to Main Menu.",
-				function() MusicBeatState.switchState(new states.editors.WeekEditorState()),
+				function() MusicBeatState.switchState(#if desktop new states.editors.WeekEditorState() #else new states.MainMenuState() #end),
 				function() MusicBeatState.switchState(new states.MainMenuState())));
 			return;
 		}
 
 		erectFolders.clear();
+		linkedErectTargets.clear();
 		// Cheetah Options: when unification is off, erect mixes stay standalone.
 		if(ClientPrefs.data.erectMixUnification)
-		for (weekName in WeekData.weeksList)
 		{
-			var remixWeek:WeekData = WeekData.weeksLoaded.get(weekName);
-			if(remixWeek == null || remixWeek.songs == null) continue;
-			for (remixSong in remixWeek.songs)
+			MixesConfig.load();
+
+			// Collect every song path so explicit pairs can be validated.
+			var available:Map<String, Bool> = new Map();
+			for(weekName in WeekData.weeksList)
 			{
-				if(remixSong == null || remixSong.length < 1) continue;
-				var remixName:String = Std.string(remixSong[0]);
-				if(!ErectRemix.isErectName(remixName)) continue;
-				erectFolders.set(
-					Paths.formatToSongPath(ErectRemix.baseName(remixName)),
-					Paths.formatToSongPath(remixName));
+				var songWeek:WeekData = WeekData.weeksLoaded.get(weekName);
+				if(songWeek == null || songWeek.songs == null) continue;
+				for(song in songWeek.songs)
+				{
+					if(song == null || song.length < 1) continue;
+					available.set(Paths.formatToSongPath(Std.string(song[0])), true);
+				}
+			}
+
+			// Mixes Editor pairs take priority over the name-suffix convention.
+			for(pair in MixesConfig.pairs())
+			{
+				if(!available.exists(pair[0]) || !available.exists(pair[1])) continue;
+				erectFolders.set(pair[0], pair[1]);
+				linkedErectTargets.set(pair[1], true);
+			}
+
+			for (weekName in WeekData.weeksList)
+			{
+				var remixWeek:WeekData = WeekData.weeksLoaded.get(weekName);
+				if(remixWeek == null || remixWeek.songs == null) continue;
+				for (remixSong in remixWeek.songs)
+				{
+					if(remixSong == null || remixSong.length < 1) continue;
+					var remixName:String = Std.string(remixSong[0]);
+					if(!ErectRemix.isErectName(remixName)) continue;
+					var remixPath:String = Paths.formatToSongPath(remixName);
+					var basePath:String = Paths.formatToSongPath(ErectRemix.baseName(remixName));
+					// An explicit "normal" mark disables automatic merging.
+					if(MixesConfig.kind(remixPath) == MixesConfig.NORMAL) continue;
+					if(erectFolders.exists(basePath)) continue;
+					erectFolders.set(basePath, remixPath);
+					linkedErectTargets.set(remixPath, true);
+				}
 			}
 		}
 
@@ -131,7 +168,10 @@ class FreeplayState extends MusicBeatState
 			WeekData.setDirectoryFromWeek(leWeek);
 			for (song in leWeek.songs)
 			{
+				if(ClientPrefs.data.erectMixUnification &&
+					linkedErectTargets.exists(Paths.formatToSongPath(Std.string(song[0])))) continue;
 				if(ErectRemix.hideFromFreeplay(ClientPrefs.data.erectMixUnification, Std.string(song[0]))) continue;
+				if(!vocalistMatches(Std.string(song[0]))) continue;
 
 				var colors:Array<Int> = song[2];
 				if(colors == null || colors.length < 3)
@@ -141,6 +181,7 @@ class FreeplayState extends MusicBeatState
 				addSong(song[0], i, song[1], FlxColor.fromRGB(colors[0], colors[1], colors[2]));
 			}
 		}
+		trace('Freeplay songs for ${ClientPrefs.data.picoVocalMode ? "PICO" : "BF"}: ${songs.length}');
 		Mods.loadTopMod();
 
 		bg = new FlxSprite().loadGraphic(Paths.image('menuDesat'));
@@ -196,6 +237,10 @@ class FreeplayState extends MusicBeatState
 
 		add(scoreText);
 
+		vocalText = new FlxText(10, 10, 320, '', 18);
+		vocalText.setFormat(Paths.font("vcr.ttf"), 18, FlxColor.YELLOW, LEFT, FlxTextBorderStyle.OUTLINE, FlxColor.BLACK);
+		vocalText.scrollFactor.set();
+		add(vocalText);
 
 		missingTextBG = new FlxSprite().makeGraphic(FlxG.width, FlxG.height, FlxColor.BLACK);
 		missingTextBG.alpha = 0.6;
@@ -219,7 +264,7 @@ class FreeplayState extends MusicBeatState
 		bottomBG.alpha = 0.6;
 		add(bottomBG);
 
-		var leText:String = Language.getPhrase("freeplay_tip", "Press SPACE to listen to the Song / Press CTRL to open the Gameplay Changers Menu / Press RESET to Reset your Score and Accuracy.");
+		var leText:String = Language.getPhrase("freeplay_tip", "Press SPACE to listen to the Song / Press TAB to choose your character / Press CTRL to open the Gameplay Changers Menu / Press RESET to Reset your Score and Accuracy.");
 		bottomString = leText;
 		var size:Int = 16;
 		bottomText = new FlxText(bottomBG.x, bottomBG.y + 4, FlxG.width, leText, size);
@@ -232,7 +277,36 @@ class FreeplayState extends MusicBeatState
 		
 		changeSelection();
 		updateTexts();
+		updateVocalText();
 		super.create();
+	}
+
+	function updateVocalText():Void
+	{
+		if(vocalText == null) return;
+		var name:String = songs.length > 0 ? songs[curSelected].songName : '';
+		var songId:String = Paths.formatToSongPath(name);
+		var picoMode:Bool = ClientPrefs.data.picoVocalMode;
+
+		var effective:String = 'BF';
+		if(picoMode && PicoMix.chartExists(songId, Difficulty.getFilePath(curDifficulty)))
+			effective = 'PICO MIX';
+		else if(PicoMix.isWeekendSong(name))
+			effective = 'PICO (weekend)';
+
+		vocalText.text = 'VOCALS: $effective  [TAB: ${picoMode ? "PICO" : "BF"}]';
+	}
+
+	/**
+	 * BF hides songs with no BF vocals (Weekend 1 / explicit Pico marks).
+	 * Pico hides songs with neither Pico vocals nor an installed Pico Mix chart.
+	 * Dual songs stay visible in both lists.
+	 */
+	function vocalistMatches(songName:String):Bool
+	{
+		var picoOnly:Bool = MixesConfig.isPicoOnly(songName) || PicoMix.isPicoName(songName);
+		if(!ClientPrefs.data.picoVocalMode) return !picoOnly;
+		return picoOnly || PicoMix.chartExists(PicoMix.baseName(songName), '');
 	}
 
 	override function closeSubState()
@@ -263,6 +337,13 @@ class FreeplayState extends MusicBeatState
 	{
 		if(WeekData.weeksList.length < 1)
 			return;
+
+		if(pendingVocalistReload)
+		{
+			pendingVocalistReload = false;
+			FlxG.resetState();
+			return;
+		}
 
 		if (FlxG.sound.music.volume < 0.7)
 			FlxG.sound.music.volume += 0.5 * elapsed;
@@ -367,7 +448,19 @@ class FreeplayState extends MusicBeatState
 			}
 		}
 
-		if(FlxG.keys.justPressed.CONTROL && !player.playingMusic)
+		if(FlxG.keys.justPressed.TAB)
+		{
+			persistentUpdate = false;
+			var modeBefore:Bool = ClientPrefs.data.picoVocalMode;
+			var vocalSelect:VocalistSelectSubState = new VocalistSelectSubState();
+			vocalSelect.onConfirm = function()
+			{
+				if(ClientPrefs.data.picoVocalMode != modeBefore)
+					pendingVocalistReload = true;
+			};
+			openSubState(vocalSelect);
+		}
+		else if(FlxG.keys.justPressed.CONTROL && !player.playingMusic)
 		{
 			persistentUpdate = false;
 			openSubState(new GameplayChangersSubstate());
@@ -577,6 +670,24 @@ class FreeplayState extends MusicBeatState
 			};
 		}
 
+		// TAB toggle: when Pico vocals are requested, load the installed
+		// `(Pico Mix)` chart when one exists. Weekend songs are already
+		// Pico-sung in their base chart, so they only need a mix when the
+		// user installs one. Scores stay in their own bucket.
+		if(ClientPrefs.data.picoVocalMode && !PicoMix.isPicoName(songName))
+		{
+			var picoFolder:String = PicoMix.folderFor(songId);
+			if(PicoMix.chartExists(songId, Difficulty.getFilePath(curDifficulty)))
+			{
+				trace('Pico chart: $songName -> $picoFolder');
+				return {
+					id: Highscore.formatSong(picoFolder, curDifficulty),
+					folder: picoFolder,
+					scoreName: picoFolder
+				};
+			}
+		}
+
 		return {
 			id: Highscore.formatSong(songName, curDifficulty),
 			folder: songId,
@@ -606,6 +717,7 @@ class FreeplayState extends MusicBeatState
 		positionHighscore();
 		missingText.visible = false;
 		missingTextBG.visible = false;
+		updateVocalText();
 	}
 
 	function changeSelection(change:Int = 0, playSound:Bool = true)

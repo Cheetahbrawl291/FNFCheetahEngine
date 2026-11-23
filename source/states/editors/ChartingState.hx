@@ -27,6 +27,9 @@ import backend.Song;
 import backend.StageData;
 import backend.Highscore;
 import backend.Difficulty;
+import backend.CursorManager;
+import backend.CursorStyle;
+import backend.CursorStyleProvider;
 
 import objects.Character;
 import objects.HealthIcon;
@@ -64,7 +67,7 @@ enum abstract WaveformTarget(String)
 	var OPPONENT = 'opp';
 }
 
-class ChartingState extends MusicBeatState implements PsychUIEventHandler.PsychUIEvent
+class ChartingState extends MusicBeatState implements PsychUIEventHandler.PsychUIEvent implements CursorStyleProvider
 {
 	public static final defaultEvents:Array<Array<String>> =
 	[
@@ -1131,6 +1134,7 @@ class ChartingState extends MusicBeatState implements PsychUIEventHandler.PsychU
 				}
 				else if(FlxG.keys.justPressed.Z != FlxG.keys.justPressed.X) //Decrease/Increase Zoom
 				{
+					CursorManager.pulseZoom(FlxG.keys.justPressed.X);
 					if(FlxG.keys.justPressed.Z)
 						curZoom = zoomList[Std.int(Math.max(zoomList.indexOf(curZoom) - 1, 0))];
 					else
@@ -5309,5 +5313,50 @@ class ChartingState extends MusicBeatState implements PsychUIEventHandler.PsychU
 		#else
 		return [[[0], [0]], [[0], [0]]];
 		#end
+	}
+
+	/**
+	 * Cheetah Engine cursor mapping for the chart editor, evaluated from
+	 * Main's postUpdate signal so all of these flags are already up to date.
+	 */
+	public function provideCursorStyle():Null<CursorStyle>
+	{
+		// Moving a note/arrow takes priority over everything else in the grid.
+		if(isMovingNotes) return GRABBING;
+
+		if(gridBg == null) return null;
+
+		// Locked event column: mouse is over a blocked area.
+		if(SHOW_EVENT_COLUMN && lockedEvents &&
+			FlxG.mouse.x >= gridBg.x && FlxG.mouse.x < gridBg.x + GRID_SIZE)
+			return CROSS;
+
+		var inGrid:Bool = FlxG.mouse.x >= gridBg.x && FlxG.mouse.x < gridBg.x + gridBg.width;
+		if(!inGrid) return null;
+
+		var hoverData:Int = Math.floor((FlxG.mouse.x - gridBg.x) / GRID_SIZE);
+		if(SHOW_EVENT_COLUMN) hoverData--;
+
+		// A note/arrow sits under the pointer, the same hit test as a click.
+		if(curRenderedNotes != null)
+		{
+			for(note in curRenderedNotes.members)
+			{
+				var chartY:Float = FlxG.mouse.y - note.chartY;
+				if(chartY < 0 || chartY >= GRID_SIZE) continue;
+				if(note.isEvent)
+				{
+					if(hoverData < 0 && !lockedEvents) return POINTER;
+				}
+				else if(note.songData[1] == hoverData) return POINTER;
+			}
+		}
+
+		// Placement mode: a click here would add a note/arrow.
+		if(PsychUIInputText.focusOn == null && lastFocus == null && !ignoreClickForThisFrame && !FlxG.keys.pressed.ALT &&
+			!FlxG.mouse.overlaps(mainBox.bg) && !FlxG.mouse.overlaps(infoBox.bg))
+			return CURSOR_DEFAULT;
+
+		return null;
 	}
 }
